@@ -1,0 +1,36 @@
+Terms of Service
+Effective Date: Feb 6, 2025
+Welcome to Habitizr! These Terms of Service ("Terms") govern your access to and use of Habitizr ("the App"), including our website, mobile application, and any related services (collectively, "Services"). By using the Services, you agree to be bound by these Terms. If you do not agree, please do not use the Services.
+1. Eligibility
+You must be at least 18 years old or the legal age of majority in your jurisdiction to use Habitizr. By using the Services, you represent and warrant that you have the legal capacity to enter into this agreement.
+2. Account Registration
+You must create an account to use the Services.
+You agree to provide accurate, complete, and up-to-date information.
+You are responsible for maintaining the confidentiality of your account credentials.
+Habitizr is not responsible for any unauthorized access to your account.
+3. Use of Services
+Habitizr provides AI-driven habit tracking, reminders via SMS, and progress analysis.
+You agree to use the Services in accordance with applicable laws and regulations.
+You may not misuse, modify, disrupt, or interfere with the Services in any manner.
+4. Subscription and Payment
+Habitizr may offer free and paid subscription tiers.
+Payment is processed via third-party providers; we do not store payment details.
+Fees are non-refundable unless otherwise stated in our refund policy.
+5. SMS Notifications
+By using Habitizr, you consent to receive SMS reminders and follow-up messages.
+Standard messaging rates may apply.
+You may opt-out at any time via account settings or by contacting support.
+6. Data and Privacy
+Your use of the Services is subject to our Privacy Policy, which outlines how we collect, store, and process personal data.
+7. User Conduct
+You may not engage in fraudulent, harmful, or abusive behavior.
+You may not use automated tools to access or disrupt our Services.
+8. Termination
+Habitizr reserves the right to suspend or terminate your account if you violate these Terms.
+9. Disclaimers & Limitation of Liability
+Habitizr provides Services on an "as-is" basis without warranties.
+We do not guarantee habit success or personal improvement.
+Habitizr is not liable for any damages, losses, or third-party claims arising from your use of the Services.
+10. Governing Law
+These Terms shall be governed by the laws of British Columbia, Canada. Any disputes shall be resolved in British Columbia, Canada.
+

@@ -1,0 +1,53 @@
+Terms of Service
+Effective Date: Feb 6, 2025
+Welcome to Habitizr! These Terms of Service ("Terms") govern your access to and use of Habitizr ("the App"), including our website, mobile application, and any related services (collectively, "Services"). By using the Services, you agree to be bound by these Terms. If you do not agree, please do not use the Services.
+1. Eligibility
+You must be at least 18 years old or the legal age of majority in your jurisdiction to use Habitizr. By using the Services, you represent and warrant that you have the legal capacity to enter into this agreement.
+2. Account Registration
+You must create an account to use the Services.
+You agree to provide accurate, complete, and up-to-date information.
+You are responsible for maintaining the confidentiality of your account credentials.
+Habitizr is not responsible for any unauthorized access to your account.
+3. Use of Services
+Habitizr provides AI-driven habit tracking, reminders via SMS, and progress analysis.
+You agree to use the Services in accordance with applicable laws and regulations.
+You may not misuse, modify, disrupt, or interfere with the Services in any manner.
+You acknowledge that Habitizr is not a medical or professional service and does not provide health, psychological, or therapeutic advice.
+4. Subscription and Payment
+Habitizr may offer free and paid subscription tiers.
+Payment is processed via third-party providers; we do not store payment details.
+Fees are non-refundable unless otherwise stated in our refund policy.
+5. SMS Notifications and Carrier Fees
+By using Habitizr, you consent to receive SMS reminders and follow-up messages.
+Standard messaging rates and carrier fees may apply, and these costs are the sole responsibility of the user.
+Habitizr is not responsible for any additional charges incurred as a result of using the SMS services.
+The frequency of SMS messages depends on the habit schedule you set.
+You may opt-out at any time via account settings or by replying "STOP" to any message.
+We are not responsible for any failures, delays, or interruptions in SMS delivery due to carrier issues, network problems, or user device settings.
+6. Data and Privacy
+Your use of the Services is subject to our Privacy Policy, which outlines how we collect, store, and process personal data.
+7. User Conduct
+You may not engage in fraudulent, harmful, or abusive behavior.
+You may not use automated tools to access or disrupt our Services.
+You must comply with all applicable laws regarding the use of SMS services, including any restrictions on automated messaging.
+8. Termination
+Habitizr reserves the right to suspend or terminate your account if you violate these Terms, fail to comply with applicable laws, or engage in prohibited conduct. We may also terminate accounts due to prolonged inactivity.
+9. Disclaimers & Limitation of Liability
+Habitizr provides Services on an "as-is" and "as-available" basis without warranties of any kind.
+We do not guarantee habit success, personal improvement, or uninterrupted Service functionality.
+Habitizr is not liable for any damages, losses, or third-party claims arising from your use of the Services.
+We are not responsible for any errors, omissions, interruptions, deletions, or defects in SMS delivery or application performance.
+You acknowledge that use of the Services is entirely at your own risk.
+To the maximum extent permitted by law, Habitizr and its affiliates, officers, directors, employees, agents, and partners shall not be liable for any direct, indirect, incidental, special, punitive, or consequential damages arising from your use or inability to use the Services.
+10. Indemnification
+You agree to indemnify, defend, and hold Habitizr, its affiliates, employees, and partners harmless from any claims, damages, losses, liabilities, or expenses arising from:
+Your violation of these Terms;
+Your use or misuse of the Services;
+Your failure to comply with applicable laws and regulations.
+11. Modifications to the Services and Terms
+We may modify or discontinue any aspect of the Services at any time without liability.
+We reserve the right to update these Terms. Your continued use of the Services after changes constitutes acceptance of the revised Terms.
+12. Governing Law
+These Terms shall be governed by the laws of [Insert Jurisdiction]. Any disputes shall be resolved in [Insert Location].
+13. Contact Information
+For any questions about these Terms, contact us at info@habitizr.com.
