@@ -3,6 +3,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import stripeRouter from "./routes/stripe";
 import { startReminderScheduler } from "./scheduler";
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 const app = express();
 startReminderScheduler(); // Start the reminder scheduler
