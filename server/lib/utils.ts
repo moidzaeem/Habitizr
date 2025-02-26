@@ -1,6 +1,8 @@
 import twilio from 'twilio';
 import { OpenAI } from 'openai';
-import type { Habit } from '@db/schema';
+import { users, type Habit } from '@db/schema';
+import { db } from '@db';
+import { eq } from 'drizzle-orm';
 
 if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
   throw new Error("Twilio credentials missing. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN");
@@ -9,25 +11,46 @@ if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // SMS Verification
-export async function sendVerificationMessage(phoneNumber: string): Promise<boolean> {
+// export async function sendVerificationMessage(phoneNumber: string): Promise<boolean> {
+//   try {
+//     if (!process.env.TWILIO_PHONE_NUMBER) {
+//       throw new Error("TWILIO_PHONE_NUMBER must be set");
+//     }
+
+//     await twilioClient.messages.create({
+//       body: `Your Habitizr verification code is: ${Math.floor(100000 + Math.random() * 900000)}`,
+//       to: phoneNumber,
+//       from: process.env.TWILIO_PHONE_NUMBER
+//     });
+
+//     return true;
+//   } catch (error) {
+//     console.error('Error sending verification message:', error);
+//     return false;
+//   }
+// }
+
+export async function sendVerificationMessage(phoneNumber: string, userId: number) {
   try {
-    if (!process.env.TWILIO_PHONE_NUMBER) {
-      throw new Error("TWILIO_PHONE_NUMBER must be set");
-    }
+    const verificationToken = Buffer.from(`${userId}-${Date.now()}`).toString('base64');
+    const verificationLink = `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/verify-phone?token=${verificationToken}`;
 
     await twilioClient.messages.create({
-      body: `Your Habitizr verification code is: ${Math.floor(100000 + Math.random() * 900000)}`,
+      body: `Click this link to verify your phone number for Habitizr: ${verificationLink}`,
       to: phoneNumber,
       from: process.env.TWILIO_PHONE_NUMBER
     });
 
+    // Store the token temporarily
+    await db.update(users)
+      .set({ phoneVerificationToken: verificationToken })
+      .where(eq(users.id, userId));
+
     return true;
   } catch (error) {
     console.error('Error sending verification message:', error);
-    return false;
   }
 }
-
 // Habit Insights Generation
 export async function generateHabitInsights(habit: Habit): Promise<{
   analysis: string;

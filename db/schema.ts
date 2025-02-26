@@ -15,6 +15,7 @@ export const users = pgTable("users", {
   tosAccepted: boolean("tos_accepted").default(false),
   phoneNumber: text("phone_number").unique(),
   phoneVerified: boolean("phone_verified").default(false),
+  phoneVerificationToken: text("phone_verification_token"),
   createdAt: timestamp("created_at").defaultNow(),
   provider: text("provider"),
   providerId: text("provider_id"),
