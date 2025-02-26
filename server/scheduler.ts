@@ -4,6 +4,7 @@ import { db } from '@db';
 import { habits, users } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import { sendHabitReminder } from './twilio';
+import moment from 'moment-timezone';
 
 function parseReminderTime(time: string) {
   const [hours, minutes] = time.split(':');
@@ -38,8 +39,13 @@ export function startReminderScheduler() {
 
         const { hours, minutes } = parseReminderTime(habit.reminderTime);
         
+        // Convert current time to the user's time zone
+        const userTime = moment.tz(now, habit.timezone);  // Convert to user's time zone
+        const userHour = userTime.format('HH');           // Get hours in 24-hour format
+        const userMinute = userTime.format('mm');         // Get minutes
+
         // Check if it's time to send reminder
-        if (hours === currentHour && minutes === currentMinute) {
+        if (hours === userHour && minutes === userMinute) {
           await sendHabitReminder({ ...habit, user });
         }
       }

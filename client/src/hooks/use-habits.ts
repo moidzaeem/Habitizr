@@ -65,7 +65,7 @@ export function useHabits() {
   });
 
   const createHabit = useMutation({
-    mutationFn: async (habit: Omit<Habit, 'id' | 'userId' | 'createdAt' | 'isRunning' | 'active' | 'startedAt' | 'lastCheckin'>) => {
+    mutationFn: async (habit: Omit<Habit, 'id' | 'userId' | 'createdAt' | 'isRunning' | 'active' | 'startedAt' | 'lastCheckin' | 'timezone'>) => {
       const response = await fetch('/api/habits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -117,6 +117,35 @@ export function useHabits() {
       });
     }
   });
+
+  const updateHabit = useMutation({
+    mutationFn: async (habit: Habit) => {
+      const response = await fetch(`/api/habits/${habit.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(habit),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update habit');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/habits'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message
+      });
+    }
+  });
+
 
   const stopHabit = useMutation({
     mutationFn: async (habitId: number) => {
@@ -179,11 +208,13 @@ export function useHabits() {
     isLoading,
     error,
     createHabit: createHabit.mutateAsync,
+    updateHabit: updateHabit.mutateAsync,
     isCreating: createHabit.isPending,
     startHabit: startHabit.mutateAsync,
     stopHabit: stopHabit.mutateAsync,
     deleteHabit: deleteHabit.mutateAsync,
     isStarting: startHabit.isPending,
     isStopping: stopHabit.isPending,
+    isUpdating: updateHabit.isPending
   };
 }

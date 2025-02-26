@@ -38,6 +38,7 @@ export const habits = pgTable("habits", {
   description: text("description"),
   frequency: text("frequency").notNull(), // daily, semi-daily, weekly
   selectedDays: jsonb("selected_days"), // array of days for semi-daily/weekly
+  timezone: text("timezone").notNull().default('UTC'),
   reminderTime: text("reminder_time").notNull(),
   isRunning: boolean("is_running").default(false),
   active: boolean("active").default(true),
@@ -165,6 +166,7 @@ export const habitSchema = z.object({
   frequency: z.enum(["daily", "semi-daily", "weekly"]),
   selectedDays: z.array(z.number()).optional(),
   reminderTime: z.string().min(1, "Reminder time is required"),
+  timezone: z.string().min(1, "Timezone is required"),
 });
 
 // Export types

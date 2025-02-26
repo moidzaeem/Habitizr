@@ -38,6 +38,7 @@ const habitSchema = z.object({
   frequency: z.enum(["daily", "semi-daily", "weekly"]),
   selectedDays: z.array(z.date()).optional(),
   reminderTime: z.string().min(1, "Reminder time is required"),
+  timezone: z.string().min(1, "Timezone is required"),
 });
 
 type HabitFormData = z.infer<typeof habitSchema>;
@@ -61,6 +62,7 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
       frequency: "daily",
       selectedDays: [],
       reminderTime: "09:00",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // Added default timezone
     },
   });
 
@@ -138,6 +140,9 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
   };
 
   const frequency = form.watch("frequency");
+
+    //  This array needs to be populated with timezone data.  Consider using a library for this.
+    const timezones = Intl.supportedValuesOf('timeZone').map(tz => tz);
 
   return (
     <Form {...form}>
@@ -239,6 +244,29 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
               <FormControl>
                 <Input type="time" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="timezone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Timezone</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value || Intl.DateTimeFormat().resolvedOptions().timeZone}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select timezone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timezones.map((tz) => (
+                    <SelectItem key={tz} value={tz}>
+                      {tz}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
