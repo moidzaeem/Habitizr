@@ -10,7 +10,7 @@ import Profile from "@/pages/profile";
 import AdminDashboard from "@/pages/admin-dashboard";
 import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
-
+import { UrlParamDialogs } from "@/components/url-param-dialogs"; // Import the new component
 function Router() {
   const { user, isLoading } = useUser();
 
@@ -55,6 +55,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router />
       <Toaster />
+      <UrlParamDialogs /> {/* This will show the dialogs based on URL params */}
     </QueryClientProvider>
   );
 }
