@@ -33,8 +33,7 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_A
 export async function sendVerificationMessage(phoneNumber: string, userId: number) {
   try {
     const verificationToken = Buffer.from(`${userId}-${Date.now()}`).toString('base64');
-    const verificationLink = `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/verify-phone?token=${verificationToken}`;
-
+    const verificationLink = `${process.env.APP_URL}/api/verify-phone?token=${verificationToken}`;
     await twilioClient.messages.create({
       body: `Click this link to verify your phone number for Habitizr: ${verificationLink}`,
       to: phoneNumber,

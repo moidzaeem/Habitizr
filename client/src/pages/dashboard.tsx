@@ -5,6 +5,8 @@ import { useHabits } from "@/hooks/use-habits";
 import { useState } from "react";
 import HabitForm from "@/components/habit-form";
 import { Button } from "@/components/ui/button";
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css'; 
 import {
   Dialog,
   DialogContent,
@@ -112,6 +114,8 @@ export default function Dashboard() {
   const [selectedHabitId, setSelectedHabitId] = useState<number | null>(null);
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isTosAccepted, setIsTosAccepted] = useState(false); // Track TOS acceptance
+
   const [selectedHabit, setSelectedHabit] = useState<(typeof habits)[0] | null>(
     null,
   );
@@ -155,9 +159,9 @@ export default function Dashboard() {
   const overallProgress =
     habits.length > 0
       ? Math.round(
-          habits.reduce((sum, h) => sum + h.progressToTarget, 0) /
-            habits.length,
-        )
+        habits.reduce((sum, h) => sum + h.progressToTarget, 0) /
+        habits.length,
+      )
       : 0;
 
   const isPathfinderUser = user?.packageType === TIERS.PATHFINDER;
@@ -355,9 +359,22 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               Your Habits
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Track and manage your daily habits to build a better routine
+            <p className="text-muted-foreground text-sm md:text-base mt-2 md:mt-4">
+              Track and manage your daily habits to build a better routine.
             </p>
+
+            <hr className="border-t border-gray-300 my-4" />
+
+            <p className="text-lg font-medium">
+              <span className="text-muted-foreground">Phone Status:</span>{" "}
+              <span
+                className={`font-semibold ${user?.phoneVerified ? "text-green-600" : "text-yellow-600"
+                  }`}
+              >
+                {user?.phoneVerified ? "Verified" : "Not Verified"}
+              </span>
+            </p>
+
             {isPathfinderUser && !isInTrialPeriod && (
               <div className="mt-4">
                 <Button
@@ -416,41 +433,40 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-12">
               {habits.length <
                 getTierLimit(user?.packageType || TIERS.FREE, isAdmin) && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Card
-                      className="bg-card border-dashed border-2 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer"
-                      onClick={handleCreateHabitClick}
-                    >
-                      <CardContent className="flex flex-col items-center justify-center py-12">
-                        <div className="rounded-full bg-primary/10 p-4 mb-4 hover:bg-primary/20 transition-colors">
-                          <Plus className="h-8 w-8 text-primary" />
-                        </div>
-                        <h3 className="text-lg font-semibold mb-2">
-                          Create New Habit
-                        </h3>
-                        <p className="text-muted-foreground text-center max-w-sm">
-                          {isAdmin
-                            ? "As an admin, you can create unlimited habits"
-                            : `You can create ${
-                                getTierLimit(user?.packageType || TIERS.FREE, isAdmin) -
-                                habits.length
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Card
+                        className="bg-card border-dashed border-2 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                        onClick={handleCreateHabitClick}
+                      >
+                        <CardContent className="flex flex-col items-center justify-center py-12">
+                          <div className="rounded-full bg-primary/10 p-4 mb-4 hover:bg-primary/20 transition-colors">
+                            <Plus className="h-8 w-8 text-primary" />
+                          </div>
+                          <h3 className="text-lg font-semibold mb-2">
+                            Create New Habit
+                          </h3>
+                          <p className="text-muted-foreground text-center max-w-sm">
+                            {isAdmin
+                              ? "As an admin, you can create unlimited habits"
+                              : `You can create ${getTierLimit(user?.packageType || TIERS.FREE, isAdmin) -
+                              habits.length
                               } more habits`}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                      <DialogTitle>Create a New Habit</DialogTitle>
-                      <DialogDescription>
-                        Add another habit to your journey
-                      </DialogDescription>
-                    </DialogHeader>
-                    <HabitForm onSuccess={() => setIsHabitDialogOpen(false)} />
-                  </DialogContent>
-                </Dialog>
-              )}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px]">
+                      <DialogHeader>
+                        <DialogTitle>Create a New Habit</DialogTitle>
+                        <DialogDescription>
+                          Add another habit to your journey
+                        </DialogDescription>
+                      </DialogHeader>
+                      <HabitForm onSuccess={() => setIsHabitDialogOpen(false)} />
+                    </DialogContent>
+                  </Dialog>
+                )}
 
               {habits.map((habit, index) => (
                 <motion.div
@@ -606,16 +622,14 @@ export default function Dashboard() {
                   {achievements.map((achievement) => (
                     <div
                       key={achievement.id}
-                      className={`flex items-start space-x-4 p-3 rounded-lg transition-colors ${
-                        achievement.unlocked ? "bg-primary/10" : "bg-muted/50"
-                      }`}
+                      className={`flex items-start space-x-4 p-3 rounded-lg transition-colors ${achievement.unlocked ? "bg-primary/10" : "bg-muted/50"
+                        }`}
                     >
                       <div
-                        className={`shrink-0 ${
-                          achievement.unlocked
-                            ? "text-primary"
-                            : "text-muted-foreground"
-                        }`}
+                        className={`shrink-0 ${achievement.unlocked
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                          }`}
                       >
                         {achievement.unlocked ? (
                           achievement.icon
@@ -779,46 +793,60 @@ export default function Dashboard() {
           </div>
 
           <Dialog
-            open={selectedHabitId !== null}
-            onOpenChange={(open) => !open && setSelectedHabitId(null)}
+      open={selectedHabitId !== null}
+      onOpenChange={(open) => !open && setSelectedHabitId(null)}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Verify Phone Number</DialogTitle>
+          <DialogDescription>
+            Enter your phone number to receive SMS notifications for your habits.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label htmlFor="phone" className="text-sm font-medium">
+              Phone Number
+            </label>
+            <PhoneInput
+              id="phone"
+              international
+              defaultCountry="US" // You can set the default country code
+              value={phoneNumber}
+              onChange={setPhoneNumber}
+              placeholder="Enter phone number"
+              className="w-full py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="tos"
+              checked={isTosAccepted}
+              onChange={(e) => setIsTosAccepted(e.target.checked)}
+            />
+            <label htmlFor="tos" className="text-sm">
+              I accept the <a href="/?tos=true" className="text-blue-600">Terms of Service</a>
+            </label>
+          </div>
+
+          <Button
+            onClick={handlePhoneSubmit}
+            className="w-full text-lg py-3 px-6"
+            disabled={isVerifying || !isTosAccepted} // Disable if not accepted TOS
           >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Verify Phone Number</DialogTitle>
-                <DialogDescription>
-                  Enter your phone number to receive SMS notifications for your
-                  habits.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-medium">
-                    Phone Number
-                  </label>
-                  <Input
-                    id="phone"
-                    placeholder="+1234567890"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                  />
-                </div>
-                <Button
-                  onClick={handlePhoneSubmit}
-                  className="w-full text-lg py-3 px-6"
-                  disabled={isVerifying}
-                >
-                  {isVerifying ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    "Verify & Start Habit"
-                  )}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+            {isVerifying ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              'Verify & Start Habit'
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
 
           <Dialog
             open={editingHabit !== null}

@@ -97,8 +97,13 @@ export default function AuthPage() {
       if (result.ok) {
         toast({
           title: "Registration successful",
-          description: "Please check your email for verification instructions.",
+          description: "Please login",
         });
+        //  registerForm.reset();
+        setTimeout(()=>{
+            window.location.href = '/auth'
+        }, 1000)
+        // window.location.href = '/'; // Redirect to the root URL
       } else {
         toast({
           variant: "destructive",

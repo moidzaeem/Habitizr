@@ -165,13 +165,13 @@ export function setupAuth(app: Express) {
           createdAt: new Date(),
         })
         .returning();
-
-      // Login after registration
-      req.login(user, (err) => {
-        if (err) return next(err);
-        const { password: _, ...userWithoutPassword } = user;
-        res.status(201).json(userWithoutPassword);
-      });
+res.status(200).json();      // Login after registration
+      // req.login(user, (err) => {
+      //   if (err) return next(err);
+      //   const { password: _, ...userWithoutPassword } = user;
+      //   // res.status(201).json(userWithoutPassword);
+      //   res.redirect('/');
+      // });
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ error: "Registration failed. Please try again." });
