@@ -683,15 +683,17 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/sms/webhook", async (req, res) => {
-    const { From, Body } = req.body;
-    const response = await handleIncomingSMS(From, Body);
-
-    res.type("text/xml");
-    res.send(
-      `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${response}</Message></Response>`,
-    );
+    // const { From, Body } = req.body;
+    
+    // Handle the incoming SMS
+    // const response = await handleIncomingSMS(From, Body);
+    
+    // Send JSON response
+    res.json({
+      message: 'We received your webhook - Habitizr',
+    });
   });
-
+  
   // Temporary endpoint for testing SMS
   app.post("/api/test-sms/:username", async (req, res) => {
     try {
