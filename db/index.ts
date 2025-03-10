@@ -9,11 +9,13 @@ if (!process.env.DATABASE_URL) {
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
-// export const db = drizzle(process.env.DATABASE_URL);
+const dbURL = process.env.DATABASE_URL + '&sslrootcert=./db/ca-certificate.crt'
+console.log('DB URL: ', dbURL);
+export const db = drizzle(dbURL);
 
-export const db = drizzle({
-  connection: {
-    connectionString: process.env.DATABASE_URL
-  }, schema,
-  ws: ws,
-});
+// export const db = drizzle({
+//   connection: {
+//     connectionString: process.env.DATABASE_URL
+//   }, schema,
+//   ws: ws,
+// });
