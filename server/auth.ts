@@ -137,6 +137,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
+    console.log('WAOW: ', 'working');
     try {
       const { username, password, email } = req.body;
 
