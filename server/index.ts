@@ -4,11 +4,28 @@ import { setupVite, serveStatic, log } from "./vite";
 import stripeRouter from "./routes/stripe";
 import { startReminderScheduler } from "./scheduler";
 import dotenv from 'dotenv';
+
+import { initializeApp, cert } from "firebase-admin/app";
+import { getMessaging } from "firebase-admin/messaging";
+import fs from 'fs';
+import path from 'path';
 dotenv.config();
 
 
 const app = express();
 startReminderScheduler(); // Start the reminder scheduler
+
+
+const serviceAccount = JSON.parse(fs.readFileSync(path.resolve('./habitizr-firebase-adminsdk-fbsvc-a44c50d0de.json'), 'utf8'));
+
+const FCM_PUSH = initializeApp({
+  credential: cert(serviceAccount)
+});
+
+const messaging = getMessaging(FCM_PUSH); // This will give you access to messaging functionality
+
+
+
 
 // Regular JSON middleware for normal routes
 app.use((req, res, next) => {
@@ -23,6 +40,36 @@ app.use(express.urlencoded({ extended: false }));
 
 // Add Stripe routes
 app.use('/api/stripe', stripeRouter);
+
+app.post('/api/push-notification', (req, res) => {
+
+  const { fcmToken, title, body } = req.body;
+
+  if (!fcmToken || !title || !body) {
+    return res.status(400).json({ message: 'FCM token, title, and body are required' });
+  }
+
+  // Prepare the notification payload
+  const message = {
+    token: fcmToken,  // FCM token received in the request
+    notification: {
+      title: title,
+      body: body
+    }
+  };
+
+  // Send the push notification
+  messaging.send(message)
+    .then((response) => {
+      console.log('Successfully sent message:', response);
+      return res.status(200).json({ message: 'Push notification sent successfully', response });
+    })
+    .catch((error) => {
+      console.error('Error sending message:', error);
+      return res.status(500).json({ message: 'Error sending push notification', error });
+    });
+});
+
 
 app.use((req, res, next) => {
   const start = Date.now();
