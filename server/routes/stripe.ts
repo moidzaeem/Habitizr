@@ -41,7 +41,6 @@ router.post("/create-checkout-session", async (req, res) => {
 
       session = await createCheckoutSession(priceId, customer.id);
     }
-    console.log(session);
     res.json({ url: session });
   } catch (error) {
     console.error("Error creating checkout session:", error);
