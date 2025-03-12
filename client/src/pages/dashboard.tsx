@@ -826,7 +826,7 @@ export default function Dashboard() {
               onChange={(e) => setIsTosAccepted(e.target.checked)}
             />
             <label htmlFor="tos" className="text-sm">
-              I accept the <a href="/?tos=true" className="text-blue-600">Terms of Service</a>
+              I accept the <a href="/?tos=true" className="text-blue-600">Terms of Service and Opt In to receive text messages</a>
             </label>
           </div>
 
