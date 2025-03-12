@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth-page";
+import Optin from "@/pages/opt-in";
 import Dashboard from "@/pages/dashboard";
 import Profile from "@/pages/profile";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -27,6 +28,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/opt-in" component={Optin} />
         <Route component={Landing} />
       </Switch>
     );
