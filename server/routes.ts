@@ -857,7 +857,7 @@ ${browserInfo}
         res.json({ url: session.url });
       } catch (error) {
         console.error("Error creating checkout session:", error);
-        res.status(500).json({
+        res.status(200).json({
           error:
             error instanceof Error
               ? error.message
