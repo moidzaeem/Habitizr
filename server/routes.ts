@@ -873,24 +873,31 @@ ${browserInfo}
     async (req, res) => {
       const trailblazer = 'price_1R1ad3JKwzZ1wTvdcpJArZco';
       const pathFinder = 'price_1R1acjJKwzZ1wTvdgzMyrOKn';
+  
       try {
+        // Destructure the packageType from the request body
         const { packageType } = req.body;
-
+  
+        // Check if user is authenticated
         if (!req.user) {
           return res.status(401).json({ error: "Not authenticated" });
         }
-
-        // Get user with Stripe customer ID
+  
+        // Get the user with the Stripe customer ID
         const [userWithStripe] = await db
           .select()
           .from(users)
           .where(eq(users.id, req.user.id))
           .limit(1);
-
+  
+        if (!userWithStripe) {
+          return res.status(404).json({ error: "User not found" });
+        }
+  
         let customerId = userWithStripe.stripeCustomerId;
-
+  
+        // If the user doesn't have a Stripe customer ID, create one
         if (!customerId) {
-          // Create Stripe customer if not exists
           const customer = await stripe.customers.create({
             email: userWithStripe.email || undefined,
             name: userWithStripe.username,
@@ -899,61 +906,48 @@ ${browserInfo}
             },
           });
           customerId = customer.id;
-
+  
           // Update user with new Stripe customer ID
           await db
             .update(users)
             .set({ stripeCustomerId: customer.id })
             .where(eq(users.id, userWithStripe.id));
         }
-
+  
+        // Ensure the packageType is valid
+        const priceId = packageType === TIERS.TRAILBLAZER ? trailblazer : pathFinder;
+        if (!priceId) {
+          return res.status(400).json({ error: "Invalid package type" });
+        }
+  
+        // Create a Stripe subscription
         const subscription = await stripe.subscriptions.create({
-          customer: customerId, // Your customer ID
+          customer: customerId,
           items: [
             {
-              price:packageType === TIERS.TRAILBLAZER ? trailblazer : pathFinder
+              price: priceId, // Use the correct price based on packageType
             },
           ],
-          payment_behavior: 'default_incomplete', // Ensures the payment is not finalized until confirmed
-          expand: ['latest_invoice.payment_intent'], // Expands the payment intent to confirm the payment
+          payment_behavior: 'default_incomplete', // Payment is not finalized until confirmed
+          expand: ['latest_invoice.payment_intent'], // Expand payment intent to confirm payment
         });
-
-
-        // // Create a price for the package type
-        // const session = await stripe.checkout.sessions.create({
-        //   customer: customerId,
-        //   payment_method_types: ["card"],
-        //   line_items: [
-        //     {
-        //       price_data: {
-        //         currency: "usd",
-        //         unit_amount: packageType === TIERS.PATHFINDER ? 999 : 1999, // Amount in cents
-        //         product_data: {
-        //           name: `${packageType} Plan`,
-        //         },
-        //         recurring: { interval: "month" }, // Ensures it's a subscription
-        //       },
-        //       quantity: 1,
-        //     },
-        //   ],
-        //   mode: "subscription",
-        //   success_url: `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/profile?session_id={CHECKOUT_SESSION_ID}`,
-        //   cancel_url: `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/profile`,
-        // });
-
-        console.log(subscription?.latest_invoice?.payment_intent?.client_secret);
-        res.json({ clientSecret: subscription?.latest_invoice?.payment_intent?.client_secret });
+  
+        // Check if subscription and payment_intent are available
+        // @ts-ignore
+        const clientSecret = subscription?.latest_invoice?.payment_intent?.client_secret;
+        if (!clientSecret) {
+          return res.status(500).json({ error: "Failed to retrieve client secret" });
+        }
+        res.status(200).json({ clientSecret });
       } catch (error) {
         console.error("Error creating checkout session:", error);
         res.status(500).json({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to create checkout session",
+          error: error instanceof Error ? error.message : "Failed to create checkout session",
         });
       }
-    },
+    }
   );
+  
 
   const httpServer = createServer(app);
   return httpServer;
