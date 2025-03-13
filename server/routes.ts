@@ -867,6 +867,94 @@ ${browserInfo}
     },
   );
 
+  app.post(
+    "/api/get-client-secret",
+    isAuthenticated,
+    async (req, res) => {
+      const trailblazer = 'price_1R1ad3JKwzZ1wTvdcpJArZco';
+      const pathFinder = 'price_1R1acjJKwzZ1wTvdgzMyrOKn';
+      try {
+        const { packageType } = req.body;
+
+        if (!req.user) {
+          return res.status(401).json({ error: "Not authenticated" });
+        }
+
+        // Get user with Stripe customer ID
+        const [userWithStripe] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, req.user.id))
+          .limit(1);
+
+        let customerId = userWithStripe.stripeCustomerId;
+
+        if (!customerId) {
+          // Create Stripe customer if not exists
+          const customer = await stripe.customers.create({
+            email: userWithStripe.email || undefined,
+            name: userWithStripe.username,
+            metadata: {
+              userId: userWithStripe.id.toString(),
+            },
+          });
+          customerId = customer.id;
+
+          // Update user with new Stripe customer ID
+          await db
+            .update(users)
+            .set({ stripeCustomerId: customer.id })
+            .where(eq(users.id, userWithStripe.id));
+        }
+
+        const subscription = await stripe.subscriptions.create({
+          customer: customerId, // Your customer ID
+          items: [
+            {
+              price:packageType === TIERS.TRAILBLAZER ? trailblazer : pathFinder
+            },
+          ],
+          payment_behavior: 'default_incomplete', // Ensures the payment is not finalized until confirmed
+          expand: ['latest_invoice.payment_intent'], // Expands the payment intent to confirm the payment
+        });
+
+
+        // // Create a price for the package type
+        // const session = await stripe.checkout.sessions.create({
+        //   customer: customerId,
+        //   payment_method_types: ["card"],
+        //   line_items: [
+        //     {
+        //       price_data: {
+        //         currency: "usd",
+        //         unit_amount: packageType === TIERS.PATHFINDER ? 999 : 1999, // Amount in cents
+        //         product_data: {
+        //           name: `${packageType} Plan`,
+        //         },
+        //         recurring: { interval: "month" }, // Ensures it's a subscription
+        //       },
+        //       quantity: 1,
+        //     },
+        //   ],
+        //   mode: "subscription",
+        //   success_url: `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/profile?session_id={CHECKOUT_SESSION_ID}`,
+        //   cancel_url: `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/profile`,
+        // });
+
+        console.log(subscription?.latest_invoice?.payment_intent?.client_secret);
+        res.json({ clientSecret: subscription?.latest_invoice?.payment_intent?.client_secret });
+      } catch (error) {
+        console.error("Error creating checkout session:", error);
+        res.status(500).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to create checkout session",
+        });
+      }
+    },
+  );
+
   const httpServer = createServer(app);
   return httpServer;
 }
