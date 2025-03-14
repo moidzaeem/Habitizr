@@ -233,3 +233,137 @@ export const CookieDialog = ({ trigger }: { trigger?: React.ReactNode }) => (
     </p>
   </PolicyDialog>
 );
+
+
+export const SMSOptin = ({ trigger }: { trigger?: React.ReactNode }) => (
+  <PolicyDialog title="SMS Opt In" trigger={trigger}>
+    <h4>Habitizr SMS Opt-In Policy
+    </h4>
+    <p className="mb-4">
+      Effective Date: Thursday, March 6, 2025
+    </p>
+    <p className="mb-6">
+      Habitizr uses cookies and similar tracking technologies to enhance user experience.
+    </p>
+
+    <h3 className="text-lg font-semibold mb-2">1. Introduction
+    </h3>
+    <p className="mb-6">
+      Habitizr, a service operated by Merk Digital LTD., provides SMS-based habit-tracking reminders and AI-generated insights to help users build or break habits. By opting into SMS notifications, users agree to receive automated messages from Habitizr's toll-free number regarding their selected habits, progress tracking, and motivational insights.
+      By using Habitizr's SMS services, you consent to the terms outlined in this SMS Opt-In Policy and acknowledge that opting in is voluntary. If you do not agree with this policy, you should not opt into SMS notifications.
+
+    </p>
+
+    <h3 className="text-lg font-semibold mb-2">2. Opting Into SMS Notifications
+    </h3>
+    <p>Users can opt into receiving SMS messages from Habitizr through the following methods:
+    </p>
+    <ul className="list-disc pl-6 mb-6 space-y-1">
+      <li>During Sign-Up: By selecting SMS reminders when creating an account on habitizr.com or through the mobile application</li>
+      <li>Performance Cookies: Help us analyze user behavior to improve the App.</li>
+      <li>In Account Settings: By enabling SMS notifications within the app's settings.      </li>
+      <li>Through SMS Confirmation: By replying with a specific keyword (e.g., "START" or "YES") when prompted.
+      </li>
+    </ul>
+    <p>
+      By opting in, you expressly consent to receiving SMS messages from Habitizr’s toll-free number regarding:
+
+    </p>
+    <ul className="list-disc pl-6 mb-6 space-y-1">
+      <li>Habit reminders at scheduled times</li>
+      <li>Progress check-ins and follow-up prompts
+        .</li>
+      <li>AI-generated motivational tips and habit-building insights
+      </li>
+      <li>Important account notifications related to SMS delivery or service updates
+
+      </li>
+    </ul>
+    <p>
+      Message Frequency: Message frequency varies depending on the habits you set within the Habitizr platform. Users will receive SMS notifications at the times and frequency they configure in their settings.
+
+    </p>
+
+    <h3 className="text-lg font-semibold mb-2">Cost and Carrier Fees    </h3>
+    <ul className="list-disc pl-6 mb-6 space-y-1">
+      <li>Standard message and data rates may apply as determined by your mobile carrier.
+      </li>
+      <li>Habitizr is not responsible for any additional charges incurred as a result of SMS notifications.</li>
+      <li>Users should check with their carrier regarding any applicable SMS fees.
+      </li>
+    </ul>
+
+    <h3 className="text-lg font-semibold mb-2">4. Opting Out of SMS Messages
+    </h3>
+    <p className="mb-6">
+      Users may opt out of receiving SMS messages at any time by:
+    </p>
+    <ul className="list-disc pl-6 mb-6 space-y-1">
+      <li>Replying "STOP" to any Habitizr SMS message.</li>
+      <li>Disabling SMS reminders in the account settings of the Habitizr app.</li>
+      <li>Contacting Habitizr Support at info@habitizr.com to request removal.</li>
+    </ul>
+    <p>
+      IMPORTANT: Opting out of SMS messages only stops SMS notifications. It does not cancel your Habitizr subscription or prevent recurring charges.
+
+    </p>
+    <ul className="list-disc pl-6 mb-6 space-y-1">
+      <li>If you wish to fully cancel your subscription, you must do so from your profile page within the Habitizr app or website.
+        .</li>
+      <li>Habitizr is not responsible for refunds due to a user opting out of SMS reminders but failing to cancel their subscription.
+      </li>
+    </ul>
+
+    <h3 className="text-lg font-semibold mb-2">5.  Privacy and Data Usage
+    </h3>
+    <p className="mb-6">
+      By opting into SMS notifications, you agree that:
+
+    </p>
+    <ul className="list-disc pl-6 mb-6 space-y-1">
+      <li>Your phone number will be stored securely and used only for habit-tracking communications</li>
+      <li>Habitizr does not sell or share your phone number with third parties for marketing purposes.
+      </li>
+      <li>All messages comply with applicable regulations, including anti-spam laws.
+      </li>
+    </ul>
+
+    For full details on how we handle personal data, refer to our <PrivacyDialog />
+
+    <h3 className="text-lg font-semibold mb-2">6. Service Disruptions & Limitations
+
+    </h3>
+
+    <ul className="list-disc pl-6 mb-6 space-y-1">
+      <li>SMS notifications may not always be delivered on time due to carrier issues, service disruptions, or technical limitations.
+      </li>
+      <li>Habitizr is not liable for missed reminders due to network failures, message blocking, or user error.
+
+      </li>
+      <li>Users are responsible for ensuring their phone number is correct and can receive SMS messages.
+
+      </li>
+    </ul>
+
+
+    <h3 className="text-lg font-semibold mb-2">7. Changes to the SMS Opt-In Policy
+
+    </h3>
+
+    <p>We may update this policy periodically. Users will be notified of significant changes via email or SMS. Continued use of Habitizr's SMS services after updates constitutes acceptance of the new policy.
+    </p>
+
+    <h3 className="text-lg font-semibold mb-2">8. Contact Information
+
+
+</h3>
+
+<p>
+For questions or assistance with SMS notifications, contact: <br />
+📧 Email: info@habitizr.com <br />
+ 📍 Address: Merk Digital LTD., British Columbia, Canada
+
+</p>
+
+  </PolicyDialog>
+);

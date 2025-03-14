@@ -63,6 +63,7 @@ import { TIERS, PRICING_TIERS, isWithinTrialPeriod } from "@/lib/tiers";
 import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { SubscriptionComparison } from "@/components/subscription-comparison";
 import { ProblemReportForm } from "@/components/problem-report-form";
+import { SMSOptin, TermsDialog } from "@/components/policy-dialogs";
 
 // Keep only milestone achievements but make them locked by default
 const achievements = [
@@ -115,6 +116,7 @@ export default function Dashboard() {
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isTosAccepted, setIsTosAccepted] = useState(false); // Track TOS acceptance
+  const [isSMSOptinAccepted, setIsSMSOptin] = useState(false); // Track TOS acceptance
 
   const [selectedHabit, setSelectedHabit] = useState<(typeof habits)[0] | null>(
     null,
@@ -826,14 +828,25 @@ export default function Dashboard() {
               onChange={(e) => setIsTosAccepted(e.target.checked)}
             />
             <label htmlFor="tos" className="text-sm">
-              I accept the <a href="/?tos=true" className="text-blue-600">Terms of Service and Opt In to receive text messages</a>
+              I accept the <TermsDialog/>
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="smsOptin"
+              checked={isSMSOptinAccepted}
+              onChange={(e) => setIsSMSOptin(e.target.checked)}
+            />
+            <label htmlFor="smsOptin" className="text-sm">
+              I accept the <SMSOptin/>
             </label>
           </div>
 
           <Button
             onClick={handlePhoneSubmit}
             className="w-full text-lg py-3 px-6"
-            disabled={isVerifying || !isTosAccepted} // Disable if not accepted TOS
+            disabled={isVerifying || !isTosAccepted || !isSMSOptinAccepted} // Disable if not accepted TOS
           >
             {isVerifying ? (
               <>
