@@ -65,7 +65,7 @@ const Optin = () => {
                             className="w-full h-auto object-cover"
                         />
                          <img
-                            src="/attached_assets/new_opt-in.jpeg"
+                            src="/attached_assets/nice.jpeg"
                             alt="People doing yoga in a bright, colorful setting"
                             className="w-full h-auto object-cover"
                         />
