@@ -236,7 +236,7 @@ export const CookieDialog = ({ trigger }: { trigger?: React.ReactNode }) => (
 
 
 export const SMSOptin = ({ trigger }: { trigger?: React.ReactNode }) => (
-  <PolicyDialog title="SMS Opt In" trigger={trigger}>
+  <PolicyDialog title="SMS Opt In Policy" trigger={trigger}>
     <h4>Habitizr SMS Opt-In Policy
     </h4>
     <p className="mb-4">
