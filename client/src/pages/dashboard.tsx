@@ -839,7 +839,8 @@ export default function Dashboard() {
               onChange={(e) => setIsSMSOptin(e.target.checked)}
             />
             <label htmlFor="smsOptin" className="text-sm">
-              I accept the <SMSOptin/>
+              I consent to receive automated text messages (SMS) from Habitizr at the phone number provided for habit tracking reminders, progress follow-ups, and service-related notifications. Message and data rates may apply. I understand that consent is not required to use the service and that I may opt out at any time by replying STOP.
+              SMS Opt In Policy - <SMSOptin/>
             </label>
           </div>
 
