@@ -689,6 +689,7 @@ export function registerRoutes(app: Express): Server {
     // const response = await handleIncomingSMS(From, Body);
     
     // Send JSON response
+    console.log('Received SMS: ', JSON.stringify(req));
     res.json({
       message: 'We received your webhook - Habitizr',
     });
