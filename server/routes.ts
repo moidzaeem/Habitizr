@@ -689,7 +689,9 @@ export function registerRoutes(app: Express): Server {
     // const response = await handleIncomingSMS(From, Body);
     
     // Send JSON response
-    console.log('Received SMS: ', JSON.stringify(req));
+    console.log('wasf');
+    console.log('Received SMS: ', JSON.stringify(req.body));
+
     res.json({
       message: 'We received your webhook - Habitizr',
     });
