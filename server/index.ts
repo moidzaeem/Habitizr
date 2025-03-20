@@ -4,16 +4,15 @@ import { setupVite, serveStatic, log } from "./vite";
 import stripeRouter from "./routes/stripe";
 import { startReminderScheduler } from "./scheduler";
 import dotenv from 'dotenv';
-
 import { initializeApp, cert } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
 import fs from 'fs';
 import path from 'path';
+import { verifyEmail } from "./email";
 dotenv.config();
 
-
 const app = express();
-startReminderScheduler(); // Start the reminder scheduler
+startReminderScheduler();
 
 
 const serviceAccount = JSON.parse(fs.readFileSync(path.resolve('./habitizr-firebase-adminsdk-fbsvc-a44c50d0de.json'), 'utf8'));
@@ -21,7 +20,6 @@ const serviceAccount = JSON.parse(fs.readFileSync(path.resolve('./habitizr-fireb
 const FCM_PUSH = initializeApp({
   credential: cert(serviceAccount)
 });
-
 const messaging = getMessaging(FCM_PUSH); // This will give you access to messaging functionality
 
 
@@ -68,6 +66,26 @@ app.post('/api/push-notification', (req, res) => {
       console.error('Error sending message:', error);
       return res.status(500).json({ message: 'Error sending push notification', error });
     });
+});
+
+app.get('/verify-email', async (req, res) => {
+  try {
+    // Get the token from the request params
+    const token = req.query.token;
+    console.log('TOKEN: ', token);
+    if (!token) {
+      return res.status(400).json({ message: 'Token is required' });
+    }
+    // Call the verifyEmail function asynchronously
+    await verifyEmail(token);
+
+    // If verification is successful, send a success response
+    res.status(200).json({ message: 'Email verified successfully' });
+  } catch (error) {
+    // If an error occurs, send an error response
+    console.error('Error verifying email:', error);
+    res.status(500).json({ message: 'Error verifying email', error: error.message });
+  }
 });
 
 

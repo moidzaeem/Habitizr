@@ -190,9 +190,10 @@ const Landing = () => {
               className="space-y-12"
             >
               <div className="space-y-6">
-                <h2 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-primary via-blue-500 to-blue-600 bg-clip-text text-transparent tracking-tight leading-[1.1]">
-                  Transform Your Life Through Better Habits
-                </h2>
+              <h2 className="text-5xl md:text-7xl font-black bg-clip-text text-[#257aab] tracking-tight leading-[1.1]">
+  Transform Your Life Through Better Habits
+</h2>
+
                 <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-200 leading-relaxed font-medium">
                   Whether you're looking to build positive habits or break free from negative ones,
                   Habitizr helps you achieve lasting change with AI-powered SMS tracking.

@@ -16,7 +16,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useLocation } from "wouter";
-import { SiFacebook, SiGoogle } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -26,6 +25,7 @@ import {
   PrivacyDialog,
   CookieDialog,
 } from "@/components/policy-dialogs";
+import GoogleSignIn from "@/components/google-signin";
 
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -34,8 +34,8 @@ const loginSchema = z.object({
 
 const registerSchema = loginSchema.extend({
   email: z.string().email("Invalid email address"),
-  tosAccepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the Terms of Service" }),
+  tosAccepted: z.boolean().refine(val => val === true, {
+    message: "You must accept the Terms of Service", // This will trigger if tosAccepted is false
   }),
 });
 
@@ -65,7 +65,7 @@ export default function AuthPage() {
       username: "",
       password: "",
       email: "",
-      tosAccepted: false,
+      tosAccepted: false
     },
     mode: "onChange",
   });
@@ -97,11 +97,11 @@ export default function AuthPage() {
       if (result.ok) {
         toast({
           title: "Registration successful",
-          description: "Please login",
+          description: "Please verify your email",
         });
         //  registerForm.reset();
-        setTimeout(()=>{
-            window.location.href = '/auth'
+        setTimeout(() => {
+          window.location.href = '/auth'
         }, 1000)
         // window.location.href = '/'; // Redirect to the root URL
       } else {
@@ -137,7 +137,7 @@ export default function AuthPage() {
           className="max-w-6xl mx-auto"
         >
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-[#257aab]  bg-clip-text text-transparent mb-4">
               Start Your Journey to Better Habits Today!
             </h1>
             <p className="text-xl leading-relaxed text-gray-700 dark:text-gray-300 max-w-2xl mx-auto font-medium">
@@ -219,31 +219,7 @@ export default function AuthPage() {
                   </AnimatePresence>
 
                   <div className="space-y-8">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="grid grid-cols-2 gap-4"
-                    >
-                      <Button
-                        variant="outline"
-                        className="w-full py-6 transition-all duration-300 hover:scale-105"
-                        onClick={() => (window.location.href = "/auth/google")}
-                      >
-                        <SiGoogle className="mr-2 h-5 w-5" />
-                        Google
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full py-6 transition-all duration-300 hover:scale-105"
-                        onClick={() =>
-                          (window.location.href = "/auth/facebook")
-                        }
-                      >
-                        <SiFacebook className="mr-2 h-5 w-5" />
-                        Facebook
-                      </Button>
-                    </motion.div>
+                    <GoogleSignIn />
 
                     <div className="relative my-8">
                       <div className="absolute inset-0 flex items-center">

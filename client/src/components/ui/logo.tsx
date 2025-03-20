@@ -6,7 +6,7 @@ function Logo() {
       <img
         src="/attached_assets/logo.png"
         alt="Habitizr Logo"
-        className="h-20"
+        className="h-10"
       />
     </div>
   );

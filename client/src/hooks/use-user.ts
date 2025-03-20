@@ -41,7 +41,11 @@ async function handleRequest(
 
     if (!response.ok) {
       if (response.status >= 500) {
-        return { ok: false, message: response.statusText };
+        const rawBody = await response.json();
+        if(rawBody){
+          return { ok: false, message: rawBody.message };
+        }
+
       }
       const message = await response.text();
       return { ok: false, message };
