@@ -7,10 +7,10 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { users, loginSchema } from "@db/schema";
 import { db } from "@db";
-import { eq, or } from "drizzle-orm";
+import { eq, or, and, gt } from "drizzle-orm";
 import { TIERS } from "@/lib/tiers";
 import { OAuth2Client } from 'google-auth-library';
-import { sendVerificationEmail } from "./email";
+import { sendPasswordResetEmail, sendVerificationEmail } from "./email";
 
 const scryptAsync = promisify(scrypt);
 const crypto = {
@@ -187,6 +187,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post('/api/auth/google', async (req, res) => {
+    // 557005901423-93qf2ouvnhrjp82cm0us9fjmij0ek05v.apps.googleusercontent.com
     const client = new OAuth2Client('557005901423-93qf2ouvnhrjp82cm0us9fjmij0ek05v.apps.googleusercontent.com');
 
     const { token } = req.body; // The token sent from the client-side
@@ -259,4 +260,175 @@ export function setupAuth(app: Express) {
       return res.status(500).json({ message: 'Error verifying Google token', error });
     }
   });
+
+  app.post('/api/auth/google-signin', async (req, res) => {
+    // 557005901423-93qf2ouvnhrjp82cm0us9fjmij0ek05v.apps.googleusercontent.com
+    const client = new OAuth2Client('727936511077-987cakqcr6t40ga1t39e1ebmvft240qf.apps.googleusercontent.com');
+
+    const { token } = req.body; // The token sent from the client-side
+
+    if (!token) {
+      return res.status(400).json({ message: "Token is required" });
+    }
+
+    try {
+      // Step 1: Verify the token using Google OAuth2 client
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: '727936511077-987cakqcr6t40ga1t39e1ebmvft240qf.apps.googleusercontent.com', // Your Google client ID
+      });
+
+      const payload = ticket.getPayload();
+      const googleId = payload?.sub;  // Unique Google user ID
+      const email = payload?.email;   // Google user email
+      const name = payload?.name;     // Google user name
+      const picture = payload?.picture; // Google user profile picture
+
+      // Step 2: Check if the Google user already exists in the database
+      const [existingUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.provider, 'google'))  // First condition
+        .where(eq(users.providerId, googleId))  // Second condition (chained)
+        .limit(1);
+
+      if (existingUser) {
+        // Step 3: If the user exists, log them in (send back user data)
+        req.login(existingUser, (err) => {
+          if (err) {
+            return res.status(500).json({ message: 'Login failed', error: err });
+          }
+          return res.status(200).json({ message: 'Login successful', user: req.user });
+        });
+      } else {
+        // Step 4: If the user doesn't exist, register them
+        const hashedPassword = await crypto.hash('123245678');
+
+        const [user] = await db
+          .insert(users)
+          .values({
+            username: name,   // Set the username to the Google user's name
+            email,
+            provider: 'google',
+            providerId: googleId,  // Save the Google user ID as providerId
+            emailVerified: true,
+            picture,
+            packageType: TIERS.PATHFINDER, // Default package
+            role: 'user',
+            createdAt: new Date(),
+            password: hashedPassword
+
+          })
+          .returning();
+
+        // Log in the user and create a session
+        req.login(user, (err) => {
+          if (err) {
+            return res.status(500).json({ message: 'Login failed', error: err });
+          }
+          return res.status(200).json({ message: 'Login successful', user: req.user });
+        });
+      }
+
+    } catch (error) {
+      console.error('Error verifying Google token:', error);
+      return res.status(500).json({ message: 'Error verifying Google token', error });
+    }
+  });
+
+  app.post('/api/forgot-password', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+      // Check if the user exists in the database
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (!user) {
+        return res.status(404).json({ message: "No user found with that email." });
+      }
+
+      // Generate a reset token (could be a random string)
+      const resetToken = randomBytes(32).toString("hex");
+
+
+      // Store the token in the database with an expiration time
+      const expirationTime = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
+      await db
+        .update(users)
+        .set({
+          passwordResetToken: resetToken,
+          passwordResetTokenExpiry: expirationTime,
+        })
+        .where(eq(users.id, user.id));
+
+
+      // Send the reset token to the user's email
+      await sendPasswordResetEmail(user.email, resetToken);
+
+      res.status(200).json({ message: "Password reset email sent." });
+    } catch (error) {
+      console.error('Error during forgot-password request:', error);
+      res.status(500).json({ message: 'Something went wrong. Please try again later.' });
+    }
+  });
+
+  app.post("/api/reset-password", async (req, res) => {
+    const { token, newPassword } = req.body;
+  
+    // Check if token and newPassword are provided
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Token and new password are required" });
+    }
+  
+    try {
+      // Find user by the reset token and check expiry date
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.passwordResetToken, token), // Check for matching reset token
+            gt(users.passwordResetTokenExpiry, new Date()) // Ensure expiry is after current date/time
+          )
+        )
+        .limit(1);
+  
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired token" });
+      }
+  
+      // Validate password length
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "Password is too short" });
+      }
+  
+      // Hash the new password
+      const hashedPassword = await crypto.hash(newPassword);
+  
+      // Update the user record with the new password and clear reset token fields
+      await db
+        .update(users)
+        .set({
+          password: hashedPassword,
+          passwordResetToken: null, // Clear reset token after use
+          passwordResetTokenExpiry: null, // Clear expiry time
+        })
+        .where(eq(users.id, user.id)); // Ensure we're updating the correct user
+  
+      res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "An error occurred while resetting the password" });
+    }
+  });
+  
+
+
+
+
+
 }
