@@ -60,3 +60,18 @@ export async function verifyEmail(token: string): Promise<boolean> {
   verificationTokens.delete(token);
   return true;
 }
+
+
+export async function sendPasswordResetEmail(email:string, resetToken:string) {
+
+  // Generate the reset URL (could be a front-end route)
+  const resetURL = `${process.env.APP_URL || "http://localhost:5000"}/reset-password?token=${resetToken}`;
+
+  await transporter.sendMail({
+    from: '"Habitizr" <no-reply@habitizr.com>',
+    to: email,
+    subject: "Password Reset Request",
+    html: `<p>You requested a password reset. Please click the link below to reset your password:</p>
+    <a href="${resetURL}">${resetURL}</a>`,
+  });
+}
