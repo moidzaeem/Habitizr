@@ -12,6 +12,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
 import { UrlParamDialogs } from "@/components/url-param-dialogs"; // Import the new component
+import ResetPasswordPage from "./pages/reset-password";
 function Router() {
   const { user, isLoading } = useUser();
 
@@ -29,6 +30,7 @@ function Router() {
         <Route path="/" component={Landing} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/opt-in" component={Optin} />
+        <Route path="/reset-password" component={ResetPasswordPage} />
         <Route component={Landing} />
       </Switch>
     );

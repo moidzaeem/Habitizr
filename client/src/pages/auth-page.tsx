@@ -1,4 +1,6 @@
 import React from "react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +28,7 @@ import {
   CookieDialog,
 } from "@/components/policy-dialogs";
 import GoogleSignIn from "@/components/google-signin";
+import { ForgotPasswordModal } from "@/components/forgot-password-modal";
 
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -123,6 +126,9 @@ export default function AuthPage() {
   const verificationError = location.includes("error=invalid-token");
   const justVerified = location.includes("verified=true");
 
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+
+
   return (
     <div className="min-h-screen gradient-bg">
       <NavBar showAuthButtons={false} />
@@ -153,14 +159,13 @@ export default function AuthPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="hidden md:block"
+              className="hidden md:flex" // Use flex instead of block for alignment
             >
-              <div className="w-full transition-all duration-300 hover:shadow-xl border border-primary/10 shadow-lg rounded-lg overflow-hidden">
+              <div className="w-full h-full transition-all duration-300 hover:shadow-xl border border-primary/10 shadow-lg rounded-lg overflow-hidden">
                 <img
                   src="/attached_assets/pexels-karolina-grabowska-5908728.jpg"
                   alt="People doing yoga in a bright, colorful setting"
-                  className="w-full"
-                  style={{ height: "calc(100vh - 400px)", objectFit: "cover" }}
+                  className="w-full h-full object-cover" // Set to cover the whole height and width of the container
                 />
               </div>
             </motion.div>
@@ -169,8 +174,9 @@ export default function AuthPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-col h-full" // Ensure this also takes full height
             >
-              <Card className="w-full transition-all duration-300 hover:shadow-xl border border-primary/10 shadow-lg">
+              <Card className="w-full h-full transition-all duration-300 hover:shadow-xl border border-primary/10 shadow-lg">
                 <CardHeader className="pb-8">
                   <motion.div
                     initial={{ opacity: 0, y: -20 }}
@@ -196,8 +202,7 @@ export default function AuthPage() {
                       >
                         <Alert variant="destructive" className="mb-6">
                           <AlertDescription>
-                            Invalid or expired verification link. Please try
-                            registering again.
+                            Invalid or expired verification link. Please try registering again.
                           </AlertDescription>
                         </Alert>
                       </motion.div>
@@ -282,6 +287,18 @@ export default function AuthPage() {
                               "Login"
                             )}
                           </Button>
+
+                          {/* Forgot Password Link */}
+                          <div className="mt-4 text-center">
+                            <a
+                              href="#forgot-password"
+                              className="text-sm text-blue-500 hover:underline"
+                              onClick={() => setShowForgotPasswordModal(true)}  // Show forgot password modal on click
+                            >
+                              Forgot Password?
+                            </a>
+                          </div>
+
                         </motion.form>
                       </TabsContent>
 
@@ -364,10 +381,7 @@ export default function AuthPage() {
                           </div>
                           {registerForm.formState.errors.tosAccepted && (
                             <p className="text-sm text-destructive">
-                              {
-                                registerForm.formState.errors.tosAccepted
-                                  .message
-                              }
+                              {registerForm.formState.errors.tosAccepted.message}
                             </p>
                           )}
                           <Button
@@ -429,6 +443,11 @@ export default function AuthPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      <ForgotPasswordModal 
+        show={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)} 
+      />
 
       <footer className="mt-24 bg-background border-t">
         <div className="container mx-auto px-6 py-8">

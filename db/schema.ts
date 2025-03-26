@@ -26,6 +26,9 @@ export const users = pgTable("users", {
   mustChangePassword: boolean("must_change_password").default(false),
   stripeCustomerId: text("stripe_customer_id").unique(),
   stripeSubscriptionStatus: text("stripe_subscription_status"),
+  // New fields for password reset functionality
+  passwordResetToken: text("password_reset_token"),
+  passwordResetTokenExpiry: timestamp("password_reset_token_expiry"),
 });
 
 // Updated habits table with proper constraints
