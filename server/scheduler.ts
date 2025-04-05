@@ -20,7 +20,7 @@ export function startReminderScheduler() {
       const currentHour = now.getHours().toString().padStart(2, '0');
       const currentMinute = now.getMinutes().toString().padStart(2, '0');
       const currentDay = now.getDay(); // Get the current day (0 = Sunday, 6 = Saturday)
-      
+
       // Get all active habits with their users
       const activeHabits = await db
         .select({
@@ -42,26 +42,20 @@ export function startReminderScheduler() {
         if (!habit.reminderTime || !user.phoneVerified || user?.stripeSubscriptionStatus === 'canceled') continue;
 
         const { hours, minutes } = parseReminderTime(habit.reminderTime);
-        
+
         // Convert current time to the user's time zone
         const userTime = moment.tz(now, habit.timezone);  // Convert to user's time zone
         console.log('userTimw: ', userTime);
         const userHour = userTime.format('HH');           // Get hours in 24-hour format
         const userMinute = userTime.format('mm');         // Get minutes
 
-        console.log(userHour);
-        console.log(userMinute);
-
-        console.log(hours);
-        console.log(minutes);
-
         // Check if it's time to send reminder for daily habits
-        if (habit.frequency === "daily" && hours === userHour && minutes === userMinute) {
+        if (habit.frequency.toLowerCase() === "daily" && hours == userHour && minutes == userMinute) {
           await sendHabitReminder({ ...habit, user });
         }
 
         // Check if it's time to send reminder for semi-daily habits
-        if (habit.frequency === "semi-daily" && hours === userHour && minutes === userMinute) {
+        if (habit.frequency.toLowerCase() === "semi-daily" && hours === userHour && minutes === userMinute) {
           // Check if the current day is in the selectedDays (jsonb)
           if (habit.selectedDays && habit.selectedDays.includes(currentDay)) {
             await sendHabitReminder({ ...habit, user });
@@ -69,7 +63,7 @@ export function startReminderScheduler() {
         }
 
         // Check if it's time to send reminder for weekly habits
-        if (habit.frequency === "weekly" && hours === userHour && minutes === userMinute) {
+        if (habit.frequency.toLowerCase() === "weekly" && hours === userHour && minutes === userMinute) {
           // Check if the current day is in the selectedDays (jsonb)
           if (habit.selectedDays && habit.selectedDays.includes(currentDay)) {
             await sendHabitReminder({ ...habit, user });
