@@ -93,14 +93,3 @@ export async function sendHabitReminder(habit: Habit & { user: { phoneNumber?: s
     return false;
   }
 }
-
-// Handle Incoming SMS
-export async function handleIncomingSMS(from: string, body: string): Promise<string> {
-  try {
-    // Simple response for now
-    return "Thank you for your message. We'll process your habit update shortly.";
-  } catch (error) {
-    console.error('Error handling incoming SMS:', error);
-    return "Sorry, we couldn't process your message at this time.";
-  }
-}

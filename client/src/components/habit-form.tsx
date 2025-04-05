@@ -31,12 +31,13 @@ import {
   PRICING_TIERS,
 } from "@/lib/tiers";
 import { useUser } from "@/hooks/use-user";
+import SelectDaysComponent from "./select-day-component";
 
 const habitSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   frequency: z.enum(["daily", "semi-daily", "weekly"]),
-  selectedDays: z.array(z.date()).optional(),
+  selectedDays: z.array(z.number()).optional(),
   reminderTime: z.string().min(1, "Reminder time is required"),
   timezone: z.string().min(1, "Timezone is required"),
 });
@@ -67,6 +68,8 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
   });
 
   const onSubmit = async (data: HabitFormData) => {
+    // console.log(data);
+    // return;
     try {
       const tier = user?.packageType || TIERS.PATHFINDER;
       const isAdmin = user?.role === "admin";
@@ -106,15 +109,20 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
         }
       }
 
-      const formattedData = {
+      let formattedData = {
         ...data,
         selectedDays: data.selectedDays
-          ? data.selectedDays.map((date) => date.toDate().getDay())
+          ? data.selectedDays
           : undefined,
       };
 
       if (initialData) {
-        await updateHabit(initialData.id, formattedData);
+        formattedData = {
+          ...formattedData,
+          // @ts-ignore
+          id: initialData.id
+        }
+        await updateHabit(formattedData);
         toast({
           title: "Success",
           description: "Habit updated successfully",
@@ -141,8 +149,8 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
 
   const frequency = form.watch("frequency");
 
-    //  This array needs to be populated with timezone data.  Consider using a library for this.
-    const timezones = Intl.supportedValuesOf('timeZone').map(tz => tz);
+  //  This array needs to be populated with timezone data.  Consider using a library for this.
+  const timezones = Intl.supportedValuesOf('timeZone').map(tz => tz);
 
   return (
     <Form {...form}>
@@ -201,39 +209,7 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
           )}
         />
 
-        {(frequency === "semi-daily" || frequency === "weekly") && (
-          <FormField
-            control={form.control}
-            name="selectedDays"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Select Days</FormLabel>
-                <FormControl>
-                  <Calendar
-                    mode="multiple"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    className={cn("rounded-md border", {
-                      "max-w-full": frequency === "semi-daily",
-                    })}
-                    disabled={(date) => {
-                      if (frequency === "weekly") {
-                        // Only allow selecting one day per week
-                        return (
-                          field.value &&
-                          field.value.length >= 1 &&
-                          !field.value.includes(date)
-                        );
-                      }
-                      return false;
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        <SelectDaysComponent frequency={frequency} form={form} />
 
         <FormField
           control={form.control}
@@ -260,17 +236,32 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
                   <SelectValue placeholder="Select timezone" />
                 </SelectTrigger>
                 <SelectContent>
-                  {timezones.map((tz) => (
-                    <SelectItem key={tz} value={tz}>
-                      {tz}
-                    </SelectItem>
-                  ))}
+                  {timezones.map((tz) => {
+                    // Get the current UTC offset for each timezone
+                    const offset = new Date().toLocaleString("en-US", {
+                      timeZone: tz,
+                      hour12: false,
+                      timeZoneName: "short",
+                    }).split(" ")[2]; // Extract the UTC offset from the string (e.g., +03:00)
+
+                    // Format the offset to show UTC ±hours
+                    const formattedOffset = offset.startsWith("+")
+                      ? `UTC ${offset}`
+                      : `UTC ${offset}`;
+
+                    return (
+                      <SelectItem key={tz} value={tz}>
+                        {tz} {formattedOffset}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
+
 
         <Button
           type="submit"

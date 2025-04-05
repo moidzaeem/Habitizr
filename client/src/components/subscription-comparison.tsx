@@ -7,8 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
-import { TIERS, PRICING_TIERS } from "@/lib/tiers";
+import { TIERS, PRICING_TIERS, Tier } from "@/lib/tiers";
 import { toast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/use-user";
 
 interface SubscriptionComparisonProps {
   open: boolean;
@@ -16,7 +17,9 @@ interface SubscriptionComparisonProps {
 }
 
 export function SubscriptionComparison({ open, onOpenChange }: SubscriptionComparisonProps) {
-  const handleUpgrade = async () => {
+  const { user } = useUser();
+
+  const handleUpgrade = async (tier: string) => {
     try {
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -24,7 +27,7 @@ export function SubscriptionComparison({ open, onOpenChange }: SubscriptionCompa
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          packageType: TIERS.TRAILBLAZER,
+          packageType: tier,
         }),
       });
 
@@ -137,6 +140,10 @@ export function SubscriptionComparison({ open, onOpenChange }: SubscriptionCompa
                 </div>
               ))}
             </div>
+            <Button  disabled={user?.stripeSubscriptionStatus == 'active' && user.packageType == TIERS.PATHFINDER}  className="w-full mt-6" onClick={() => handleUpgrade(TIERS.PATHFINDER)}>
+              Upgrade to PathFinder
+            </Button>
+
           </div>
 
           {/* Trailblazer Plan */}
@@ -175,9 +182,10 @@ export function SubscriptionComparison({ open, onOpenChange }: SubscriptionCompa
                 </div>
               ))}
             </div>
-            <Button className="w-full mt-6" onClick={handleUpgrade}>
+            <Button disabled={user?.stripeSubscriptionStatus == 'active' && user.packageType == TIERS.TRAILBLAZER} className="w-full mt-6" onClick={() => handleUpgrade(TIERS.TRAILBLAZER)}>
               Upgrade to Trailblazer
             </Button>
+
           </div>
         </div>
       </DialogContent>

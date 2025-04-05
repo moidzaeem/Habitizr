@@ -405,10 +405,10 @@ export function setupAuth(app: Express) {
       if (newPassword.length < 6) {
         return res.status(400).json({ message: "Password is too short" });
       }
-  
+
       // Hash the new password
       const hashedPassword = await crypto.hash(newPassword);
-  
+
       // Update the user record with the new password and clear reset token fields
       await db
         .update(users)

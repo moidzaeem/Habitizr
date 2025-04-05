@@ -11,15 +11,14 @@ export const checkTrialStatus = async (req: Request, res: Response, next: NextFu
   }
 
   const user = req.user as any;
-  
-  if (user.packageType === TIERS.PATHFINDER) {
+  if (user.stripeSubscriptionStatus !== 'active') {
     const createdAt = new Date(user.createdAt);
     const isInTrial = isWithinTrialPeriod(createdAt);
 
     if (!isInTrial) {
       return res.status(402).json({
         error: 'Trial period expired',
-        message: 'Please upgrade to Trailblazer to continue using all features',
+        message: 'Please upgrade to packages to continue using all features',
         requiresUpgrade: true
       });
     }

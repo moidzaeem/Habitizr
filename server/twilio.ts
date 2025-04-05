@@ -7,7 +7,8 @@ import {
   habitCompletions,
   habitConversations,
   habitInsights,
-  users
+  users,
+  habitReminders
 } from '@db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
@@ -36,7 +37,7 @@ async function getConversationHistory(habitId: number, userId: number, limit = 5
   return history.reverse();
 }
 
-async function getHabitCompletionStats(habitId: number, userId: number) {
+export async function getHabitCompletionStats(habitId: number, userId: number) {
   const completions = await db
     .select()
     .from(habitCompletions)
@@ -218,6 +219,17 @@ export async function sendVerificationMessage(phoneNumber: string, userId: numbe
       const message = await generateReminderMessage(habit, stats, user, false);
       console.log('Generated AI message:', message);
 
+      await db.insert(habitReminders).values({
+        userId: habit.userId,
+        phoneNumber: habit.user.phoneNumber,
+        habitId: habit.id,
+        reminderId: `${habit.id}-${new Date().getTime()}`, // Create unique reminder ID
+        timestamp: new Date(),
+        message: message,
+        status: 'pending', // Initial status
+      });
+      
+
       // Store the AI-generated message in conversations
       await db.insert(habitConversations).values({
         habitId: habit.id,
@@ -238,62 +250,62 @@ export async function sendVerificationMessage(phoneNumber: string, userId: numbe
       console.log('Twilio message sent successfully:', twilioResponse.sid);
 
       // Schedule follow-up message after 15 minutes
-      setTimeout(async () => {
-        try {
-          // Check if user has responded
-          const recentResponse = await db
-            .select()
-            .from(habitCompletions)
-            .where(
-              and(
-                eq(habitCompletions.habitId, habit.id),
-                eq(habitCompletions.userId, habit.userId)
-              )
-            )
-            .orderBy(desc(habitCompletions.completedAt))
-            .limit(1);
+      // setTimeout(async () => {
+      //   try {
+      //     // Check if user has responded
+      //     const recentResponse = await db
+      //       .select()
+      //       .from(habitCompletions)
+      //       .where(
+      //         and(
+      //           eq(habitCompletions.habitId, habit.id),
+      //           eq(habitCompletions.userId, habit.userId)
+      //         )
+      //       )
+      //       .orderBy(desc(habitCompletions.completedAt))
+      //       .limit(1);
 
-          // Get updated stats
-          const updatedStats = await getHabitCompletionStats(habit.id, habit.userId);
+      //     // Get updated stats
+      //     const updatedStats = await getHabitCompletionStats(habit.id, habit.userId);
 
-          // Generate AI follow-up message
-          const followUpMessage = await generateReminderMessage(habit, updatedStats, user, true);
-          console.log('Generated follow-up message:', followUpMessage);
+      //     // Generate AI follow-up message
+      //     const followUpMessage = await generateReminderMessage(habit, updatedStats, user, true);
+      //     console.log('Generated follow-up message:', followUpMessage);
 
-          // Store the follow-up message
-          await db.insert(habitConversations).values({
-            habitId: habit.id,
-            userId: habit.userId,
-            message: followUpMessage,
-            role: 'assistant',
-            timestamp: new Date(),
-            context: { type: 'follow_up', stats: updatedStats }
-          });
+      //     // Store the follow-up message
+      //     await db.insert(habitConversations).values({
+      //       habitId: habit.id,
+      //       userId: habit.userId,
+      //       message: followUpMessage,
+      //       role: 'assistant',
+      //       timestamp: new Date(),
+      //       context: { type: 'follow_up', stats: updatedStats }
+      //     });
 
-          // Send follow-up via Twilio
-          const followUpResponse = await client.messages.create({
-            body: followUpMessage,
-            to: habit.user.phoneNumber,
-            from: process.env.TWILIO_PHONE_NUMBER
-          });
+      //     // Send follow-up via Twilio
+      //     const followUpResponse = await client.messages.create({
+      //       body: followUpMessage,
+      //       to: habit.user.phoneNumber,
+      //       from: process.env.TWILIO_PHONE_NUMBER
+      //     });
 
-          console.log('Follow-up message sent successfully:', followUpResponse.sid);
+      //     console.log('Follow-up message sent successfully:', followUpResponse.sid);
 
-          // Update habit insights
-          await db.insert(habitInsights).values({
-            habitId: habit.id,
-            userId: habit.userId,
-            type: 'follow_up',
-            insight: followUpMessage,
-            relevanceScore: 100,
-            validUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            metadata: { stats: updatedStats }
-          });
+      //     // Update habit insights
+      //     await db.insert(habitInsights).values({
+      //       habitId: habit.id,
+      //       userId: habit.userId,
+      //       type: 'follow_up',
+      //       insight: followUpMessage,
+      //       relevanceScore: 100,
+      //       validUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      //       metadata: { stats: updatedStats }
+      //     });
 
-        } catch (error) {
-          console.error('Error sending follow-up message:', error);
-        }
-      }, 15 * 60 * 1000);
+      //   } catch (error) {
+      //     console.error('Error sending follow-up message:', error);
+      //   }
+      // }, 15 * 60 * 1000);
     } catch (error) {
       console.error('Error in sendHabitReminder:', error);
     }
@@ -302,12 +314,12 @@ export async function sendVerificationMessage(phoneNumber: string, userId: numbe
   export async function handleIncomingSMS(from: string, body: string) {
     try {
       // Handle verification response
-      if (body.toLowerCase() === 'yes') {
-        await db.update(users)
-          .set({ phoneVerified: true })
-          .where(eq(users.phoneNumber, from));
-        return 'Phone number verified successfully!';
-      }
+      // if (body.toLowerCase() === 'yes') {
+      //   await db.update(users)
+      //     .set({ phoneVerified: true })
+      //     .where(eq(users.phoneNumber, from));
+      //   return 'Phone number verified successfully!';
+      // }
 
       // Get user and their active habit
       const [user] = await db
@@ -466,7 +478,7 @@ export async function sendVerificationMessage(phoneNumber: string, userId: numbe
     return null;
   }
 
-  async function generateWeeklyInsights(habitId: number, userId: number) {
+  export async function generateWeeklyInsights(habitId: number, userId: number) {
     const completions = await db
       .select()
       .from(habitCompletions)
@@ -552,7 +564,7 @@ export async function sendVerificationMessage(phoneNumber: string, userId: numbe
     return suggestions;
   }
 
-  async function storeInsights(habitId: number, userId: number, insights: any) {
+  export async function storeInsights(habitId: number, userId: number, insights: any) {
     const insightTypes = ['strength', 'weakness', 'suggestion'];
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + 7);

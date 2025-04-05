@@ -2,19 +2,19 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
 import { db } from "@db";
-import { habits, users, habitCompletions } from "@db/schema";
+import { habits, users, habitCompletions, habitReminders, habitResponses } from "@db/schema";
 import { checkTrialStatus } from "./middleware/checkTrialStatus";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lte, gte, or, desc } from "drizzle-orm";
 import Stripe from "stripe";
 import { TIERS } from "@/lib/tiers";
-//import { STRIPE_PRODUCTS } from "./lib/stripe"; // Removed as per intention
 import nodemailer from "nodemailer";
 import {
   sendVerificationMessage,
   generateHabitInsights,
   sendHabitReminder,
-  handleIncomingSMS,
 } from "./lib/utils";
+import { now } from "moment-timezone";
+import { generateWeeklyInsights, getHabitCompletionStats, storeInsights } from "./twilio";
 
 const isAdmin = (req: any, res: any, next: any) => {
   if (!req.isAuthenticated()) {
@@ -98,7 +98,7 @@ export function registerRoutes(app: Express): Server {
       const [userWithStripe] = await db
         .select()
         .from(users)
-         // @ts-ignore
+        // @ts-ignore
         .where(eq(users.id, req.user.id))
         .limit(1);
 
@@ -128,7 +128,7 @@ export function registerRoutes(app: Express): Server {
         recurring: { interval: "month" },
         product_data: {
           name: `${packageType} Plan`,
-           // @ts-ignore
+          // @ts-ignore
           description:
             packageType === TIERS.PATHFINDER
               ? "1 Active Habit, Basic AI Insights, Daily SMS Reminders"
@@ -179,19 +179,19 @@ export function registerRoutes(app: Express): Server {
       try {
         // Get the customer's subscriptions
         const subscriptions = await stripe.subscriptions.list({
-           // @ts-ignore
+          // @ts-ignore
           customer: req.user.stripeCustomerId,
-          limit: 1,
         });
 
+
+        console.log(subscriptions);
         if (subscriptions.data.length === 0) {
           return res.status(400).send("No active subscription found");
         }
 
         // Cancel the subscription at period end
-        await stripe.subscriptions.update(subscriptions.data[0].id, {
-          cancel_at_period_end: true,
-        });
+        await stripe.subscriptions.cancel(subscriptions.data[0].id);
+
 
         res.sendStatus(200);
       } catch (error) {
@@ -212,7 +212,7 @@ export function registerRoutes(app: Express): Server {
 
       try {
         const portalSession = await stripe.billingPortal.sessions.create({
-           // @ts-ignore
+          // @ts-ignore
           customer: req.user.stripeCustomerId!,
           return_url: `${req.protocol}://${req.get("host")}/profile`,
         });
@@ -254,7 +254,7 @@ export function registerRoutes(app: Express): Server {
       const [habit] = await db
         .select()
         .from(habits)
-         // @ts-ignore
+        // @ts-ignore
         .where(and(eq(habits.id, habitId), eq(habits.userId, req.user.id)))
         .limit(1);
 
@@ -335,7 +335,7 @@ export function registerRoutes(app: Express): Server {
           password: hashedPassword,
           mustChangePassword: false,
         })
-         // @ts-ignore
+        // @ts-ignore
         .where(eq(users.id, req.user.id))
         .returning();
 
@@ -350,32 +350,32 @@ export function registerRoutes(app: Express): Server {
   app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
-      
+
       // Check if req.user exists
       if (!req.user) {
         return res.status(500).send("Failed to authenticate user");
       }
-  
+
       // Prevent deleting self
       if (userId === req.user.id) {
         return res.status(400).send("Cannot delete your own admin account");
       }
-  
+
       // Assuming you're using a library like Prisma, you might need to change this accordingly
       const deletedUser = await db.delete(users).where(eq(users.id, userId));
-  
+
       if (deletedUser) {
         res.sendStatus(200);
       } else {
         res.status(404).send("User not found");
       }
-  
+
     } catch (error) {
       console.error("Error deleting user:", error);
       res.status(500).send("Failed to delete user");
     }
   });
-  
+
   // User phone number update endpoint
   app.post("/api/user/phone", isAuthenticated, async (req, res) => {
     if (!req.user) {
@@ -400,7 +400,7 @@ export function registerRoutes(app: Express): Server {
 
       // Send verification message
       const success = await sendVerificationMessage(phoneNumber, req.user.id);
-            if (!success) {
+      if (!success) {
         throw new Error("Failed to send verification message");
       }
 
@@ -683,20 +683,70 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/sms/webhook", async (req, res) => {
-    // const { From, Body } = req.body;
-    
-    // Handle the incoming SMS
-    // const response = await handleIncomingSMS(From, Body);
-    
-    // Send JSON response
-    console.log('wasf');
-    console.log('Received SMS: ', JSON.stringify(req.body));
+    const { From, Body } = req.body;
+
+    // console.log('Received SMS: ', JSON.stringify(req.body));
+    const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)); // Start of today
+    const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
+    const reminder = await db
+      .select()
+      .from(habitReminders)
+      .where(
+        or(
+          eq(habitReminders.phoneNumber, From),
+          and(
+            gte(habitReminders.timestamp, startOfDay),
+            lte(habitReminders.timestamp, endOfDay)
+          )
+        )
+      )
+      .orderBy(desc(habitReminders.timestamp)) // Use the 'desc' method to specify descending order
+      .limit(1)
+    const mostRecentReminder = reminder[0];  // If the query returns an array
+
+    if (Body.toLowerCase() === 'yes' || Body.toLowerCase() === 'no') {
+      const habitId = mostRecentReminder.habitId;  // Habit ID associated with the most recent reminder
+      const habit = await db.select().from(habits).where(eq(habits.id, habitId)).limit(1);
+
+      if (habit.length > 0) {
+        const status = 'responded';
+        const response = Body.toLowerCase() === 'yes' ? 'completed' : 'not_completed';
+
+        // Update the habit status in the database
+        await db.update(habitReminders).set({ status, response }).where(eq(habitReminders.habitId, habitId));
+
+        // Insert the new habit response with the current timestamp
+        await db.insert(habitResponses).values({
+          habitId: habitId, // Use habitId from the habit object (not habitReminders)
+          response:Body.toLowerCase() === 'yes' ? 'YES' : 'NO',
+          timestamp: new Date() // Use new Date() to get the current timestamp
+        });
+
+        await db.insert(habitCompletions).values({
+          habitId: habitId,
+          userId: mostRecentReminder.userId,
+          completed: Body.toLowerCase() === 'yes' ? true : false,
+          completedAt: new Date()
+        })
+      }
+
+      const completionStats = await getHabitCompletionStats(habitId,  mostRecentReminder.userId);
+
+      const isCompletion = Body.toLowerCase().includes('yes') || Body.toLowerCase().includes('no');
+
+      // Generate and store insights if needed
+      if (isCompletion && completionStats.totalCompletions % 7 === 0) {
+        const insights = await generateWeeklyInsights(habitId, mostRecentReminder.userId);
+        await storeInsights(habitId, mostRecentReminder.userId, insights);
+      }
+
+    }
 
     res.json({
       message: 'We received your webhook - Habitizr',
     });
   });
-  
+
   // Temporary endpoint for testing SMS
   app.post("/api/test-sms/:username", async (req, res) => {
     try {
@@ -769,14 +819,13 @@ Category: ${category}
 Description:
 ${description}
 
-${
-  stepsToReproduce
-    ? `Steps to Reproduce:
+${stepsToReproduce
+          ? `Steps to Reproduce:
 ${stepsToReproduce}
 
 `
-    : ""
-}
+          : ""
+        }
 Browser/Device Information:
 ${browserInfo}
       `;
@@ -797,78 +846,92 @@ ${browserInfo}
   });
 
   // Inside registerRoutes function, replace the existing create-checkout-session endpoint with:
-  app.post(
-    "/api/create-checkout-session",
-    isAuthenticated,
-    async (req, res) => {
-      try {
-        const { packageType } = req.body;
+  app.post("/api/create-checkout-session", isAuthenticated, async (req, res) => {
+    try {
+      const { packageType } = req.body;
 
-        if (!req.user) {
-          return res.status(401).json({ error: "Not authenticated" });
-        }
-
-        // Get user with Stripe customer ID
-        const [userWithStripe] = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, req.user.id))
-          .limit(1);
-
-        let customerId = userWithStripe.stripeCustomerId;
-
-        if (!customerId) {
-          // Create Stripe customer if not exists
-          const customer = await stripe.customers.create({
-            email: userWithStripe.email || undefined,
-            name: userWithStripe.username,
-            metadata: {
-              userId: userWithStripe.id.toString(),
-            },
-          });
-          customerId = customer.id;
-
-          // Update user with new Stripe customer ID
-          await db
-            .update(users)
-            .set({ stripeCustomerId: customer.id })
-            .where(eq(users.id, userWithStripe.id));
-        }
-
-        // Create a price for the package type
-        const session = await stripe.checkout.sessions.create({
-          customer: customerId,
-          payment_method_types: ["card"],
-          line_items: [
-            {
-              price_data: {
-                currency: "usd",
-                unit_amount: packageType === TIERS.PATHFINDER ? 999 : 1999, // Amount in cents
-                product_data: {
-                  name: `${packageType} Plan`,
-                },
-                recurring: { interval: "month" }, // Ensures it's a subscription
-              },
-              quantity: 1,
-            },
-          ],
-          mode: "subscription",
-          success_url: `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/profile?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/profile`,
-        });
-
-        res.json({ url: session.url });
-      } catch (error) {
-        console.error("Error creating checkout session:", error);
-        res.status(500).json({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to create checkout session",
-        });
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
       }
-    },
-  );
+
+      // Get user with Stripe customer ID
+      const [userWithStripe] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user.id))
+        .limit(1);
+
+      if (userWithStripe.packageType === packageType && userWithStripe.stripeSubscriptionStatus === 'active') {
+        return res.status(500).json({ error: "You already subscribed to this package" });
+      }
+
+      let customerId = userWithStripe.stripeCustomerId;
+
+      if (!customerId) {
+        // Create Stripe customer if not exists
+        const customer = await stripe.customers.create({
+          email: userWithStripe.email || undefined,
+          name: userWithStripe.username,
+          metadata: {
+            userId: userWithStripe.id.toString(),
+          },
+        });
+        customerId = customer.id;
+
+        // Update user with new Stripe customer ID
+        await db
+          .update(users)
+          .set({ stripeCustomerId: customer.id })
+          .where(eq(users.id, userWithStripe.id));
+      }
+
+      // Check if the user has any active subscriptions
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active", // Filter by active subscriptions
+        limit: 1, // Only need to know if there's at least one active subscription
+      });
+
+      // Determine the price amount for the selected package
+      const priceAmount = packageType === TIERS.PATHFINDER ? 699 : 999; // Amount in cents
+
+      // If the user isn't subscribed to any plan, create a new subscription
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              unit_amount: priceAmount, // Amount in cents
+              product_data: {
+                name: `${packageType} Plan`,
+              },
+              recurring: { interval: "month" }, // Ensures it's a subscription
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/profile?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.APP_URL || `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`}/profile`,
+        metadata: {
+          packageType: packageType, // Add the packageType to metadata
+        },
+      });
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to create checkout session",
+      });
+    }
+  });
+
 
   app.post(
     "/api/get-client-secret",
@@ -876,29 +939,29 @@ ${browserInfo}
     async (req, res) => {
       const trailblazer = 'price_1R1ad3JKwzZ1wTvdcpJArZco';
       const pathFinder = 'price_1R1acjJKwzZ1wTvdgzMyrOKn';
-  
+
       try {
         // Destructure the packageType from the request body
         const { packageType } = req.body;
-  
+
         // Check if user is authenticated
         if (!req.user) {
           return res.status(401).json({ error: "Not authenticated" });
         }
-  
+
         // Get the user with the Stripe customer ID
         const [userWithStripe] = await db
           .select()
           .from(users)
           .where(eq(users.id, req.user.id))
           .limit(1);
-  
+
         if (!userWithStripe) {
           return res.status(404).json({ error: "User not found" });
         }
-  
+
         let customerId = userWithStripe.stripeCustomerId;
-  
+
         // If the user doesn't have a Stripe customer ID, create one
         if (!customerId) {
           const customer = await stripe.customers.create({
@@ -909,20 +972,20 @@ ${browserInfo}
             },
           });
           customerId = customer.id;
-  
+
           // Update user with new Stripe customer ID
           await db
             .update(users)
             .set({ stripeCustomerId: customer.id })
             .where(eq(users.id, userWithStripe.id));
         }
-  
+
         // Ensure the packageType is valid
         const priceId = packageType === TIERS.TRAILBLAZER ? trailblazer : pathFinder;
         if (!priceId) {
           return res.status(400).json({ error: "Invalid package type" });
         }
-  
+
         // Create a Stripe subscription
         const subscription = await stripe.subscriptions.create({
           customer: customerId,
@@ -934,7 +997,7 @@ ${browserInfo}
           payment_behavior: 'default_incomplete', // Payment is not finalized until confirmed
           expand: ['latest_invoice.payment_intent'], // Expand payment intent to confirm payment
         });
-  
+
         // Check if subscription and payment_intent are available
         // @ts-ignore
         const clientSecret = subscription?.latest_invoice?.payment_intent?.client_secret;
@@ -950,7 +1013,7 @@ ${browserInfo}
       }
     }
   );
-  
+
 
   const httpServer = createServer(app);
   return httpServer;

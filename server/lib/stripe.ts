@@ -114,25 +114,55 @@ export async function handleWebhook(
     );
 
     switch (event.type) {
-      case "customer.subscription.created":
       case "customer.subscription.updated":
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
         const status = subscription.status;
         const metadata = subscription.metadata;
+        console.log('STATUS: ', status);
 
         // Get package type from metadata, fallback to Pathfinder if not found
-        const packageType = metadata.packageType || TIERS.PATHFINDER;
+        // const packageType = metadata.packageType || TIERS.PATHFINDER;
+        const totalAmount = subscription.items.data[0].plan.amount;
+
+        // @ts-ignore
+        const packageType = totalAmount >=999? TIERS.TRAILBLAZER :TIERS.PATHFINDER;
 
         console.log(`Updating subscription for customer ${customerId} to ${packageType}`);
 
-        await db
-          .update(users)
-          .set({
-            packageType,
-            stripeSubscriptionStatus: status,
-          })
-          .where(eq(users.stripeCustomerId, customerId));
+        // If the subscription is canceled, update the user record to reflect cancellation
+        if (status === "canceled" || status === "unpaid") {
+          console.log(`Subscription for customer ${customerId} has been canceled.`);
+          await db
+            .update(users)
+            .set({
+              stripeSubscriptionStatus: "canceled", // Mark the status as canceled
+            })
+            .where(eq(users.stripeCustomerId, customerId));
+        } else {
+          // Otherwise, handle active subscription
+          await db
+            .update(users)
+            .set({
+              packageType,
+              stripeSubscriptionStatus: status,
+            })
+            .where(eq(users.stripeCustomerId, customerId));
+        }
+        break;
+
+
+      case "checkout.session.completed":
+        const session = event.data.object; // session object from the event
+        const subscriptionId = session.subscription;
+
+        // Add metadata to subscription after checkout session is completed
+        await stripe.subscriptions.update(subscriptionId, {
+          metadata: {
+            packageType: session.metadata.packageType, // Metadata from checkout session
+          },
+        });
+
         break;
 
       case "customer.subscription.deleted":

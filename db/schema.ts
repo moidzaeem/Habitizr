@@ -54,6 +54,20 @@ export const habits = pgTable("habits", {
   };
 });
 
+export const habitReminders = pgTable("habit_reminders", {
+  id: serial("id").primaryKey(),                    // Unique identifier for each reminder
+  reminderId: text("reminder_id").notNull(),        // Unique identifier for the reminder
+  userId: integer("user_id").notNull(),             // Foreign key to users table
+  phoneNumber: text("phone_number").notNull(),      // User's phone number for response tracking
+  habitId: integer("habit_id").notNull(),           // Foreign key to the habits table
+  timestamp: timestamp("timestamp").defaultNow(),   // When the reminder was sent
+  message: text("message").notNull(),               // The reminder message
+  status: text("status").default("pending"),        // Status of the reminder (e.g., 'pending', 'completed')
+  response: text("response"),                       // User's response ("YES" or "NO")
+  createdAt: timestamp("created_at").defaultNow(),  // When the reminder was created
+  updatedAt: timestamp("updated_at").defaultNow(),  // When the reminder was last updated
+});
+
 // New table for tracking daily habit completions
 export const habitCompletions = pgTable("habit_completions", {
   id: serial("id").primaryKey(),

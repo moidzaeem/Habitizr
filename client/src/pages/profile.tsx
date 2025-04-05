@@ -88,9 +88,9 @@ export default function Profile() {
 
   // Calculate subscription-related information
   const isPathfinderUser = user?.packageType === TIERS.PATHFINDER;
-  const isInTrialPeriod = user?.createdAt ? isWithinTrialPeriod(new Date(user.createdAt)) : false;
+  const isInTrialPeriod = user?.stripeSubscriptionStatus == 'trial' && user?.createdAt ? isWithinTrialPeriod(new Date(user.createdAt)) : false;
   const currentPlan = PRICING_TIERS[user?.packageType || TIERS.PATHFINDER];
-  const isTrialExpired = !isInTrialPeriod && user?.packageType === TIERS.PATHFINDER;
+  const isTrialExpired = !isInTrialPeriod;
 
   useEffect(() => {
     if (isTrialExpired) {
@@ -113,7 +113,7 @@ export default function Profile() {
 
       toast({
         title: "Success",
-        description: "Your subscription has been canceled. You'll have access until the end of your billing period.",
+        description: "Your subscription has been canceled.",
       });
 
       // Refresh user data to update UI
@@ -238,9 +238,9 @@ export default function Profile() {
 
   return (
     <>
-      <SubscriptionComparison 
-        open={showUpgradeModal} 
-        onOpenChange={setShowUpgradeModal} 
+      <SubscriptionComparison
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
       />
       <div className="min-h-screen bg-background">
         <NavBar />
@@ -270,69 +270,64 @@ export default function Profile() {
                   Subscription Details
                 </CardTitle>
                 <CardDescription>
-                  Your current plan and subscription status
+                  Your current plan and subscription status {' '}
+                  {isTrialExpired && user?.stripeSubscriptionStatus !== 'active'? (
+                     <span
+                      onClick={() => setShowUpgradeModal(true)}
+                      className="text-red-500 cursor-pointer"
+                    >
+                       (TRIAL EXPIRED) Click here to upgrade
+                    </span>
+                  ) : ''}
                 </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="p-4 rounded-lg bg-muted/50">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold capitalize">
-                        {currentPlan.name} Plan
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        ${currentPlan.price}/month
-                      </p>
-                    </div>
-                    {isInTrialPeriod && (
-                      <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                        Trial Period
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-2">
-                      <Calendar className="h-5 w-5 mt-1 text-muted-foreground" />
+              </CardHeader>
+              {user?.stripeSubscriptionStatus === 'active' && (
+                <CardContent className="space-y-6">
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <div className="flex justify-between items-start mb-4">
                       <div>
-                        <p className="text-sm font-medium">Member Since</p>
+                        <h3 className="text-lg font-semibold capitalize">
+                          {currentPlan.name} Plan
+                        </h3>
+
                         <p className="text-sm text-muted-foreground">
-                          {user?.createdAt ? format(new Date(user.createdAt), 'MMMM d, yyyy') : 'N/A'}
+                          ${currentPlan.price}/month
                         </p>
                       </div>
+                      {isInTrialPeriod && (
+                        <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                          Trial Period
+                        </div>
+                      )}
                     </div>
 
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Plan Features:</p>
-                      <ul className="space-y-2">
-                        {currentPlan.features.map((feature, index) => (
-                          <li key={index} className="flex items-center gap-2 text-sm">
-                            <CheckCircle2 className="h-5 w-5 text-primary" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2">
+                        <Calendar className="h-5 w-5 mt-1 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Member Since</p>
+                          <p className="text-sm text-muted-foreground">
+                            {user?.createdAt ? format(new Date(user.createdAt), 'MMMM d, yyyy') : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="mt-6 space-y-2">
-                    {isPathfinderUser ? (
-                      <Button
-                        className="w-full bg-gradient-to-r from-primary to-blue-600 text-white hover:opacity-90 text-lg py-3 px-6"
-                        onClick={handleUpgrade}
-                        disabled={isUpgrading}
-                      >
-                        {isUpgrading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Upgrading...
-                          </>
-                        ) : (
-                          "Upgrade to Trailblazer"
-                        )}
-                      </Button>
-                    ) : (
-                      <>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Plan Features:</p>
+                        <ul className="space-y-2">
+                          {currentPlan.features.map((feature, index) => (
+                            <li key={index} className="flex items-center gap-2 text-sm">
+                              <CheckCircle2 className="h-5 w-5 text-primary" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 space-y-2">
+                      {user?.stripeSubscriptionStatus === 'active' && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -360,11 +355,12 @@ export default function Profile() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-                      </>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
+                </CardContent>
+              )}
+
             </Card>
 
             {/* Account Settings Card */}

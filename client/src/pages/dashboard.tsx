@@ -6,7 +6,7 @@ import { useState } from "react";
 import HabitForm from "@/components/habit-form";
 import { Button } from "@/components/ui/button";
 import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css'; 
+import 'react-phone-number-input/style.css';
 import {
   Dialog,
   DialogContent,
@@ -172,6 +172,7 @@ export default function Dashboard() {
     : false;
   const isAdmin = user?.role === "admin";
 
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -220,7 +221,7 @@ export default function Dashboard() {
       setSelectedHabitId(null);
       toast({
         title: "Success",
-        description: "Phone number verified and habit started!",
+        description: "You will receive phone no verification on your given phone no",
       });
     } catch (error) {
       toast({
@@ -264,6 +265,17 @@ export default function Dashboard() {
     }
     setIsHabitDialogOpen(true);
   };
+
+  const numbersToDays = {
+    0: "Sunday",    // 0 corresponds to Monday
+    1: "Monday",   // 1 corresponds to Tuesday
+    2: "Tuesday", // 2 corresponds to Wednesday
+    3: "Wednesday",  // 3 corresponds to Thursday
+    4: "Thursday",    // 4 corresponds to Friday
+    5: "Friday",  // 5 corresponds to Saturday
+    6: "Saturday"     // 6 corresponds to Sunday
+  };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -564,14 +576,13 @@ export default function Dashboard() {
                                 <span className="text-xs text-muted-foreground ml-2">
                                   (
                                   {habit.selectedDays
-                                    .map((day: number) =>
-                                      format(new Date().setDate(day), "EEE"),
-                                    )
+                                    .map((dayNumber) => numbersToDays[dayNumber])
                                     .join(", ")}
                                   )
                                 </span>
                               )}
                           </span>
+
                         </div>
                         <div className="flex items-center text-sm">
                           <Clock className="h-5 w-5 mr-2 text-muted-foreground" />
@@ -795,78 +806,78 @@ export default function Dashboard() {
           </div>
 
           <Dialog
-      open={selectedHabitId !== null}
-      onOpenChange={(open) => !open && setSelectedHabitId(null)}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Verify Phone Number</DialogTitle>
-          <DialogDescription>
-            Enter your phone number to receive SMS notifications for your habits.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label htmlFor="phone" className="text-sm font-medium">
-              Phone Number
-            </label>
-            <PhoneInput
-              id="phone"
-              international
-              defaultCountry="US" // You can set the default country code
-              value={phoneNumber}
-              onChange={setPhoneNumber}
-              placeholder="Enter phone number"
-              className="w-full py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="tos"
-              checked={isTosAccepted}
-              onChange={(e) => setIsTosAccepted(e.target.checked)}
-            />
-            <label htmlFor="tos" className="text-sm">
-              I accept the <TermsDialog/>
-            </label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="smsOptin"
-              checked={isSMSOptinAccepted}
-              onChange={(e) => setIsSMSOptin(e.target.checked)}
-            />
-            <label htmlFor="smsOptin" className="text-sm">
-              I consent to receive automated text messages (SMS) from Habitizr at the phone number provided for habit tracking reminders, progress follow-ups, and service-related notifications. Message and data rates may apply. I understand that consent is not required to use the service and that I may opt out at any time by replying STOP.
-          <br />  <SMSOptin/>
-            </label>
-          </div>
-
-          <Button
-            onClick={handlePhoneSubmit}
-            className="w-full text-lg py-3 px-6"
-            disabled={isVerifying || !isTosAccepted || !isSMSOptinAccepted} // Disable if not accepted TOS
+            open={selectedHabitId !== null}
+            onOpenChange={(open) => !open && setSelectedHabitId(null)}
           >
-            {isVerifying ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              'Verify & Start Habit'
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Verify Phone Number</DialogTitle>
+                <DialogDescription>
+                  Enter your phone number to receive SMS notifications for your habits.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="text-sm font-medium">
+                    Phone Number
+                  </label>
+                  <PhoneInput
+                    id="phone"
+                    international
+                    defaultCountry="US" // You can set the default country code
+                    value={phoneNumber}
+                    onChange={setPhoneNumber}
+                    placeholder="Enter phone number"
+                    className="w-full py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="tos"
+                    checked={isTosAccepted}
+                    onChange={(e) => setIsTosAccepted(e.target.checked)}
+                  />
+                  <label htmlFor="tos" className="text-sm">
+                    I accept the <TermsDialog />
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="smsOptin"
+                    checked={isSMSOptinAccepted}
+                    onChange={(e) => setIsSMSOptin(e.target.checked)}
+                  />
+                  <label htmlFor="smsOptin" className="text-sm">
+                    I consent to receive automated text messages (SMS) from Habitizr at the phone number provided for habit tracking reminders, progress follow-ups, and service-related notifications. Message and data rates may apply. I understand that consent is not required to use the service and that I may opt out at any time by replying STOP.
+                    <br />  <SMSOptin />
+                  </label>
+                </div>
+
+                <Button
+                  onClick={handlePhoneSubmit}
+                  className="w-full text-lg py-3 px-6"
+                  disabled={isVerifying || !isTosAccepted || !isSMSOptinAccepted} // Disable if not accepted TOS
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify & Start Habit'
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog
             open={editingHabit !== null}
             onOpenChange={(open) => !open && setEditingHabit(null)}
           >
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Edit Habit</DialogTitle>
                 <DialogDescription>Update your habit details</DialogDescription>
@@ -877,6 +888,7 @@ export default function Dashboard() {
               />
             </DialogContent>
           </Dialog>
+
 
           <AlertDialog
             open={!!habitToDelete}

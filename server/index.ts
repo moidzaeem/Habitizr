@@ -15,7 +15,7 @@ const app = express();
 startReminderScheduler();
 
 
-const serviceAccount = JSON.parse(fs.readFileSync(path.resolve('./habitizr-firebase-adminsdk-fbsvc-a44c50d0de.json'), 'utf8'));
+const serviceAccount = JSON.parse(fs.readFileSync(path.resolve('./habitizr-778e7-firebase-adminsdk-fbsvc-07eb0eff80.json'), 'utf8'));
 
 const FCM_PUSH = initializeApp({
   credential: cert(serviceAccount)
