@@ -261,6 +261,7 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // FOR MOBILE
   app.post('/api/auth/google-signin', async (req, res) => {
     // 557005901423-93qf2ouvnhrjp82cm0us9fjmij0ek05v.apps.googleusercontent.com
     const client = new OAuth2Client('727936511077-987cakqcr6t40ga1t39e1ebmvft240qf.apps.googleusercontent.com');
@@ -288,8 +289,13 @@ export function setupAuth(app: Express) {
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.provider, 'google'))  // First condition
-        .where(eq(users.providerId, googleId))  // Second condition (chained)
+        .where(
+          or(
+            eq(users.provider, 'google'),
+            // @ts-ignore
+            eq(users.providerId, googleId)
+          )
+        )
         .limit(1);
 
       if (existingUser) {
@@ -313,6 +319,67 @@ export function setupAuth(app: Express) {
             providerId: googleId,  // Save the Google user ID as providerId
             emailVerified: true,
             picture,
+            packageType: TIERS.PATHFINDER, // Default package
+            role: 'user',
+            createdAt: new Date(),
+            password: hashedPassword
+
+          })
+          .returning();
+
+        // Log in the user and create a session
+        req.login(user, (err) => {
+          if (err) {
+            return res.status(500).json({ message: 'Login failed', error: err });
+          }
+          return res.status(200).json({ message: 'Login successful', user: req.user });
+        });
+      }
+
+    } catch (error) {
+      console.error('Error verifying Google token:', error);
+      return res.status(500).json({ message: 'Error verifying Google token', error });
+    }
+  });
+
+  // FOR MOBILE
+  app.post('/api/auth/apple-signin', async (req, res) => {
+
+
+    try {
+
+      const { name, email } = req.body;
+
+      const [existingUser] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.provider, 'apple'),
+            eq(users.email, email)
+          )
+        )
+        .limit(1);
+
+      if (existingUser) {
+        // Step 3: If the user exists, log them in (send back user data)
+        req.login(existingUser, (err) => {
+          if (err) {
+            return res.status(500).json({ message: 'Login failed', error: err });
+          }
+          return res.status(200).json({ message: 'Login successful', user: req.user });
+        });
+      } else {
+        // Step 4: If the user doesn't exist, register them
+        const hashedPassword = await crypto.hash('123245678');
+
+        const [user] = await db
+          .insert(users)
+          .values({
+            username: name,   // Set the username to the Google user's name
+            email,
+            provider: 'apple',
+            emailVerified: true,
             packageType: TIERS.PATHFINDER, // Default package
             role: 'user',
             createdAt: new Date(),
@@ -378,12 +445,12 @@ export function setupAuth(app: Express) {
 
   app.post("/api/reset-password", async (req, res) => {
     const { token, newPassword } = req.body;
-  
+
     // Check if token and newPassword are provided
     if (!token || !newPassword) {
       return res.status(400).json({ message: "Token and new password are required" });
     }
-  
+
     try {
       // Find user by the reset token and check expiry date
       const [user] = await db
@@ -396,11 +463,11 @@ export function setupAuth(app: Express) {
           )
         )
         .limit(1);
-  
+
       if (!user) {
         return res.status(400).json({ message: "Invalid or expired token" });
       }
-  
+
       // Validate password length
       if (newPassword.length < 6) {
         return res.status(400).json({ message: "Password is too short" });
@@ -418,17 +485,13 @@ export function setupAuth(app: Express) {
           passwordResetTokenExpiry: null, // Clear expiry time
         })
         .where(eq(users.id, user.id)); // Ensure we're updating the correct user
-  
+
       res.status(200).json({ message: "Password updated successfully" });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "An error occurred while resetting the password" });
     }
   });
-  
-
-
-
 
 
 }

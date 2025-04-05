@@ -179,10 +179,40 @@ export default function Profile() {
   };
 
   const handleDeleteAccount = async () => {
-    toast({
-      title: "Account Deleted",
-      description: "Your account has been permanently deleted",
-    });
+    try {
+
+
+
+      const response = await fetch("/api/delete-user", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast({
+          title: "Error Deleting Account",
+          description: errorData.error || "Something went wrong. Please try again.",
+        });
+        return;
+      }
+
+      // Handle successful deletion
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+
+      // Redirect to login or home page after account deletion (if necessary)
+      // Example:
+      // window.location.href = "/login";
+
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast({
+        title: "Error Deleting Account",
+        description: "An error occurred while deleting your account. Please try again.",
+      });
+    }
   };
 
   const handleBackToDashboard = () => {
@@ -271,14 +301,14 @@ export default function Profile() {
                 </CardTitle>
                 <CardDescription>
                   Your current plan and subscription status {' '}
-                  {isTrialExpired && user?.stripeSubscriptionStatus !== 'active'? (
-                     <span
+                  {isTrialExpired && user?.stripeSubscriptionStatus !== 'active' ? (
+                    <span
                       onClick={() => setShowUpgradeModal(true)}
                       className="text-red-500 cursor-pointer"
                     >
-                       (TRIAL EXPIRED) Click here to upgrade
+                      (TRIAL EXPIRED) Click here to upgrade
                     </span>
-                  ) : ''}
+                  ) : 'is in Trail'}
                 </CardDescription>
 
               </CardHeader>

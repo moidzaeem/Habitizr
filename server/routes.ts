@@ -718,7 +718,7 @@ export function registerRoutes(app: Express): Server {
         // Insert the new habit response with the current timestamp
         await db.insert(habitResponses).values({
           habitId: habitId, // Use habitId from the habit object (not habitReminders)
-          response:Body.toLowerCase() === 'yes' ? 'YES' : 'NO',
+          response: Body.toLowerCase() === 'yes' ? 'YES' : 'NO',
           timestamp: new Date() // Use new Date() to get the current timestamp
         });
 
@@ -730,7 +730,7 @@ export function registerRoutes(app: Express): Server {
         })
       }
 
-      const completionStats = await getHabitCompletionStats(habitId,  mostRecentReminder.userId);
+      const completionStats = await getHabitCompletionStats(habitId, mostRecentReminder.userId);
 
       const isCompletion = Body.toLowerCase().includes('yes') || Body.toLowerCase().includes('no');
 
@@ -1013,6 +1013,63 @@ ${browserInfo}
       }
     }
   );
+
+  app.delete("/api/delete-user",isAuthenticated, async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    try {
+      const userId = req.user.id;
+  
+      // Check if the user exists in the database
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+  
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  
+      // Check if the user has a Stripe customer ID
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({ error: "User does not have an associated Stripe customer" });
+      }
+  
+      // Cancel the user's subscription on Stripe
+      const subscriptions = await stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'active',
+        limit: 1,
+      });
+  
+      if (subscriptions.data.length > 0) {
+        const subscription = subscriptions.data[0];
+  
+        // Cancel the active subscription
+        await stripe.subscriptions.cancel(subscription.id);
+      }
+  
+      // Optionally, delete the Stripe customer (if desired)
+      // await stripe.customers.de(user.stripeCustomerId);
+  
+      // Remove user's subscriptions (if needed for local record keeping)
+     
+  
+      // Remove the user from the database
+      await db
+        .delete(users)
+        .where(eq(users.id, userId));
+  
+      res.status(200).json({ message: "User and subscriptions successfully deleted from database and Stripe" });
+  
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Failed to delete user and subscriptions. Please try again." });
+    }
+  });
 
 
   const httpServer = createServer(app);

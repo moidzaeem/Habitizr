@@ -36,8 +36,6 @@ export function startReminderScheduler() {
           )
         );
 
-      console.log('User Habits', activeHabits.length);
-
       for (const { habit, user } of activeHabits) {
         if (!habit.reminderTime || !user.phoneVerified || user?.stripeSubscriptionStatus === 'canceled') continue;
 
@@ -45,7 +43,6 @@ export function startReminderScheduler() {
 
         // Convert current time to the user's time zone
         const userTime = moment.tz(now, habit.timezone);  // Convert to user's time zone
-        console.log('userTimw: ', userTime);
         const userHour = userTime.format('HH');           // Get hours in 24-hour format
         const userMinute = userTime.format('mm');         // Get minutes
 
