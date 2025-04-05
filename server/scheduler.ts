@@ -35,6 +35,8 @@ export function startReminderScheduler() {
           )
         );
 
+      console.log('User Habits', activeHabits,length);
+
       for (const { habit, user } of activeHabits) {
         if (!habit.reminderTime || !user.phoneVerified || user?.stripeSubscriptionStatus === 'canceled') continue;
 
