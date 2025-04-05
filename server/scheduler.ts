@@ -49,6 +49,12 @@ export function startReminderScheduler() {
         const userHour = userTime.format('HH');           // Get hours in 24-hour format
         const userMinute = userTime.format('mm');         // Get minutes
 
+        console.log(userHour);
+        console.log(userMinute);
+
+        console.log(hours);
+        console.log(minutes);
+
         // Check if it's time to send reminder for daily habits
         if (habit.frequency === "daily" && hours === userHour && minutes === userMinute) {
           await sendHabitReminder({ ...habit, user });
