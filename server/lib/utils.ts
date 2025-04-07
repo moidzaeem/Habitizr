@@ -48,6 +48,7 @@ export async function sendVerificationMessage(phoneNumber: string, userId: numbe
     return true;
   } catch (error) {
     console.error('Error sending verification message:', error);
+    return false
   }
 }
 // Habit Insights Generation

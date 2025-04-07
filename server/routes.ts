@@ -411,7 +411,7 @@ export function registerRoutes(app: Express): Server {
         .send(
           error instanceof Error
             ? error.message
-            : "Failed to update phone number",
+            : "Phone no is not correct By twillio!",
         );
     }
   });
