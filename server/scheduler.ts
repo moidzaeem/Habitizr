@@ -15,7 +15,6 @@ export function startReminderScheduler() {
   // Run every minute to check for reminders
   cron.schedule('* * * * *', async () => {
     try {
-      console.log('cron runnin');
       const now = new Date();
       const currentHour = now.getHours().toString().padStart(2, '0');
       const currentMinute = now.getMinutes().toString().padStart(2, '0');
