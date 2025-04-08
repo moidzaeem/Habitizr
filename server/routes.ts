@@ -945,6 +945,9 @@ ${browserInfo}
         const { packageType } = req.body;
 
         console.log('PACKAGE TYPE: ', packageType);
+        if(!packageType){
+          return res.status(500).json({ error: "Package type is required" });
+        }
 
         // Check if user is authenticated
         if (!req.user) {
