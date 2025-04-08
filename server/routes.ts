@@ -944,6 +944,8 @@ ${browserInfo}
         // Destructure the packageType from the request body
         const { packageType } = req.body;
 
+        console.log('PACKAGE TYPE: ', packageType);
+
         // Check if user is authenticated
         if (!req.user) {
           return res.status(401).json({ error: "Not authenticated" });
