@@ -129,10 +129,13 @@ export function setupAuth(app: Express) {
     res.json(req.user);
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+  app.post("/api/login", passport.authenticate("local"), async (req, res) => {
+    if (req.body?.fcmToken) {
+      await db.update(users).set({ fcm: req.body.fcmToken }).where(eq(users.id, req?.user.id));
+    }
     res.status(200).json(req.user);
   });
-
+  
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
@@ -170,7 +173,7 @@ export function setupAuth(app: Express) {
           username,
           password: hashedPassword,
           email,
-          emailVerified: true,
+          emailVerified: false,
           packageType: TIERS.PATHFINDER,
           role: 'user',
           provider: 'local',

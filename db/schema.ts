@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   // New fields for password reset functionality
   passwordResetToken: text("password_reset_token"),
   passwordResetTokenExpiry: timestamp("password_reset_token_expiry"),
+  fcm: text("fcm"),
 });
 
 // Updated habits table with proper constraints
