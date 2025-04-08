@@ -28,7 +28,6 @@ const GoogleSignIn = () => {
         <GoogleOAuthProvider clientId="557005901423-93qf2ouvnhrjp82cm0us9fjmij0ek05v.apps.googleusercontent.com">
             <div className="flex justify-center items-center ">
                 <div className="text-center">
-                    <h2 className="text-3xl mb-4">Sign in with Google</h2>
                     <GoogleLogin
                         onSuccess={handleSuccess}
                         // @ts-ignore

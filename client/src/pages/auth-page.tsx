@@ -1,5 +1,6 @@
 import React from "react";
 import { useState } from "react";
+import AppleSignin from 'react-apple-signin-auth';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -224,7 +225,40 @@ export default function AuthPage() {
                   </AnimatePresence>
 
                   <div className="space-y-8">
+                    <div className=" justify-center items-center d-flex">
+                      <AppleSignin
+                        authOptions={{
+                          clientId: 'com.habitizr.habitizrapp',
+                          scope: 'email name',
+                          redirectURI: 'https://habitizr.com',
+                          state: 'state',
+                          nonce: 'nonce',
+                          usePopup: true,
+                        }}
+                        uiType="dark"
+                        
+                        className="apple-auth-btn text-center align-items-center d-flex"
+                        // Removes default style tag
+                        noDefaultStyle={false}
+                        // Allows changing the button's children text
+                        buttonExtraChildren="Continue with Apple"
+                        // Extra controlling props
+                        // Called upon sign-in success if authOptions.usePopup = true
+                        onSuccess={(response) => console.log(response)}
+                        // Called upon sign-in error
+                        onError={(error) => console.error(error)}
+                        // Skips loading the Apple script if true
+                        skipScript={false}
+                        // Apple image props
+                        iconProp={{ style: { marginTop: '10px' } }} // Default is undefined
+
+                      // Uncomment this if you want to fully customize the button rendering
+                      // render={(props) => <button {...props}>My Custom Button</button>}
+                      />
+                    </div>
                     <GoogleSignIn />
+
+
 
                     <div className="relative my-8">
                       <div className="absolute inset-0 flex items-center">
@@ -444,9 +478,9 @@ export default function AuthPage() {
         </motion.div>
       </div>
 
-      <ForgotPasswordModal 
+      <ForgotPasswordModal
         show={showForgotPasswordModal}
-        onClose={() => setShowForgotPasswordModal(false)} 
+        onClose={() => setShowForgotPasswordModal(false)}
       />
 
       <footer className="mt-24 bg-background border-t">
