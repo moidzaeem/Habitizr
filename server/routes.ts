@@ -682,7 +682,7 @@ export function registerRoutes(app: Express): Server {
 
       await db
         .delete(habitInsights)
-        .where(eq(habitResponses.habitId, habitId));
+        .where(eq(habitInsights.habitId, habitId));
 
         await db
         .delete(habitReminders)
