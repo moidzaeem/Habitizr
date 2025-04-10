@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
 import { db } from "@db";
-import { habits, users, habitCompletions, habitReminders, habitResponses, habitConversations } from "@db/schema";
+import { habits, users, habitCompletions, habitReminders, habitResponses, habitConversations, habitInsights } from "@db/schema";
 import { checkTrialStatus } from "./middleware/checkTrialStatus";
 import { eq, and, lte, gte, or, desc } from "drizzle-orm";
 import Stripe from "stripe";
@@ -675,6 +675,18 @@ export function registerRoutes(app: Express): Server {
       await db
         .delete(habitCompletions)
         .where(eq(habitCompletions.habitId, habitId));
+
+      await db
+        .delete(habitResponses)
+        .where(eq(habitResponses.habitId, habitId));
+
+      await db
+        .delete(habitInsights)
+        .where(eq(habitResponses.habitId, habitId));
+
+        await db
+        .delete(habitReminders)
+        .where(eq(habitReminders.habitId, habitId));
 
       // Then delete the habit
       await db.delete(habits).where(eq(habits.id, habitId));
