@@ -669,7 +669,7 @@ export function registerRoutes(app: Express): Server {
 
       await db
       .delete(habitConversations)
-      .where(eq(habitCompletions.habitId, habitId));
+      .where(eq(habitConversations.habitId, habitId));
 
       // Delete the habit completions first (due to foreign key constraint)
       await db
