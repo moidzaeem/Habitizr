@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, hashPassword } from "./auth";
 import { db } from "@db";
-import { habits, users, habitCompletions, habitReminders, habitResponses } from "@db/schema";
+import { habits, users, habitCompletions, habitReminders, habitResponses, habitConversations } from "@db/schema";
 import { checkTrialStatus } from "./middleware/checkTrialStatus";
 import { eq, and, lte, gte, or, desc } from "drizzle-orm";
 import Stripe from "stripe";
@@ -666,6 +666,10 @@ export function registerRoutes(app: Express): Server {
       if (!existingHabit) {
         return res.status(404).send("Habit not found or unauthorized");
       }
+
+      await db
+      .delete(habitConversations)
+      .where(eq(habitCompletions.habitId, habitId));
 
       // Delete the habit completions first (due to foreign key constraint)
       await db

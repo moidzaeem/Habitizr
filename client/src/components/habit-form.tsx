@@ -199,8 +199,8 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="semi-daily">Semi-Daily</SelectItem>
+                  <SelectItem value="daily">Every Day</SelectItem>
+                  <SelectItem value="semi-daily">Specific-Days</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
                 </SelectContent>
               </Select>
