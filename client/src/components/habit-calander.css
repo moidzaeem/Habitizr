@@ -2,91 +2,146 @@
 
 /* General Calendar Container */
 .habit-calendar-container {
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f5f5f5;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 550px;
+  margin: 2rem auto;
+  padding: 24px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease-in-out;
 }
 
-/* Styling the Calendar */
+/* Base calendar styles */
 .react-calendar {
-    width: 100%;
-    border: none;
-    border-radius: 10px;
-    font-family: 'Arial', sans-serif;
-    background-color: #fff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  font-family: "Inter", sans-serif;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Customizing the navigation arrows and month */
+/* Navigation bar styling */
 .react-calendar__navigation {
-    background-color: #4caf50;
-    color: white;
-    border-radius: 5px;
+  background-color: #257aab; /* Emerald */
+  border-radius: 8px;
+  color: white;
+  padding: 10px 0;
+  margin-bottom: 10px;
 }
 
-/* Customizing the month name */
+.react-calendar__navigation button {
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.react-calendar__navigation__arrow button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Weekday labels */
 .react-calendar__month-view__weekdays {
-    background-color: #e3e3e3;
+  background-color: #f1f5f9;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #64748b;
+  padding: 0.75rem 0;
 }
 
-/* Highlighting the selected date */
-.react-calendar__tile--active {
-    background-color: #252a25 !important;
-    color: white !important;
-}
-
-/* Marking a completed habit */
-.completed {
-    background-color: #4caf50 !important; /* Green for completed habits */
-    color: white !important;
-}
-
-/* Marking a missed habit */
-.missed {
-    background-color: #f44336 !important; /* Red for missed habits */
-    color: white !important;
-}
-
-/* Adding hover effect to the tiles */
-.react-calendar__tile:hover {
-    background-color: #e0e0e0 !important;
-    cursor: pointer;
-}
-
-/* Changing the appearance of the current date */
-.react-calendar__tile--now {
-    border: 2px solid #4caf50;
-    background-color: #e0f7e3;
-    color: #4caf50;
-    font-weight: bold;
-}
-
-/* Optional: Make the calendar font size a little larger */
+/* Base tile styling */
 .react-calendar__tile {
-    font-size: 14px;
+  font-size: 14px;
+  padding: 0.75rem 0;
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
 }
 
-/* Optional: Style the tiles' number and labels */
-.react-calendar__month-view__days__day {
-    font-size: 16px;
-    font-weight: bold;
+/* Active/selected date */
+.react-calendar__tile--active {
+  background-color: #0f172a !important;
+  color: #fff !important;
+  font-weight: 600;
 }
-/* Styles for completed days */
+
+/* Current day highlight */
+.react-calendar__tile--now {
+  border: 2px solid #10b981;
+  background-color: #e0f7ec;
+  color: #065f46;
+  font-weight: 600;
+}
+
+/* Hover state */
+.react-calendar__tile:hover {
+  background-color: #e2e8f0 !important;
+  cursor: pointer;
+}
+
+/* Completed habit day */
 .react-calendar__tile.completed {
-    background-color: #4ade80 !important; /* green */
-    color: white !important;
-    border-radius: 6px;
+  background-color: #34d399 !important;
+  color: white !important;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Missed habit day */
+.react-calendar__tile.missed {
+  background-color: #f87171 !important;
+  color: white !important;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Responsive calendar font size */
+@media (max-width: 480px) {
+  .react-calendar__tile {
+    font-size: 12px;
+    padding: 0.5rem 0;
+  }
+
+  .habit-calendar-container {
+    padding: 16px;
+  }
+}
+
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
   }
   
-  /* Styles for missed days */
-  .react-calendar__tile.missed {
-    background-color: #f87171 !important; /* red */
-    color: white !important;
-    border-radius: 6px;
+  .modal {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: fadeInScale 0.3s ease;
   }
   
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
   

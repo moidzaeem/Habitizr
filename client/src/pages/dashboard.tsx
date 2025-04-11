@@ -102,9 +102,9 @@ const getTierLimit = (packageType: string, isAdmin: boolean) => {
     case TIERS.PATHFINDER:
       return 1;
     case TIERS.FREE:
-      return 3;
+      return 1;
     default:
-      return 3;
+      return 1;
   }
 };
 
@@ -392,7 +392,7 @@ export default function Dashboard() {
               </span>
             </p>
 
-            {isPathfinderUser && !isInTrialPeriod && (
+            {!isAdmin && isPathfinderUser && !isInTrialPeriod && (
               <div className="mt-4">
                 <Button
                   variant="default"
@@ -617,7 +617,7 @@ export default function Dashboard() {
                       </div>
                     </CardContent>
                   </Card>
-                  {selectedHabit?.id === habit.id && habit && (
+                  {selectedHabit?.id === habit.id && habit && habit.startedAt != null && (
                     <HabitCalendar habit={habit} />
                   )}
                 </motion.div>

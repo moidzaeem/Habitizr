@@ -4,7 +4,7 @@ import { setupAuth, hashPassword } from "./auth";
 import { db } from "@db";
 import { habits, users, habitCompletions, habitReminders, habitResponses, habitConversations, habitInsights } from "@db/schema";
 import { checkTrialStatus } from "./middleware/checkTrialStatus";
-import { eq, and, lte, gte, or, desc } from "drizzle-orm";
+import { eq, and, lte, gte, or, desc, sql } from "drizzle-orm";
 import Stripe from "stripe";
 import { TIERS } from "@/lib/tiers";
 import nodemailer from "nodemailer";
@@ -14,6 +14,9 @@ import {
   sendHabitReminder,
 } from "./lib/utils";
 import { now } from "moment-timezone";
+import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
+
 import { generateWeeklyInsights, getHabitCompletionStats, storeInsights } from "./twilio";
 
 const isAdmin = (req: any, res: any, next: any) => {
@@ -271,48 +274,60 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Update admin user creation endpoint
-  app.post("/api/admin/users", isAdmin, async (req, res) => {
+  app.put("/api/admin/users/:id", isAdmin, async (req, res) => {
     try {
-      const { username, password, email, role, packageType } = req.body;
-      console.log("Creating new user:", { username, email, role, packageType });
+      const userId = parseInt(req.params.id);
+      const { username, email, role, packageType, password } = req.body;
 
-      // Check if username already exists
-      const [existingUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, username))
-        .limit(1);
+      // Find the user first
+      const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
-      if (existingUser) {
-        return res.status(400).send("Username already exists");
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
 
-      // Hash the password before storing
-      const hashedPassword = await hashPassword(password);
+      // Check if username is changing and already exists
+      if (username && username !== user.username) {
+        const [existingUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.username, username))
+          .limit(1);
 
-      // Create the new user with email verified and must change password flags
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          username,
-          password: hashedPassword,
-          email,
-          emailVerified: true,
-          packageType: packageType || "free",
-          role: role || "user",
-          provider: "local",
-          mustChangePassword: true,
-        })
+        if (existingUser) {
+          return res.status(400).json({ message: "Username already taken" });
+        }
+      }
+
+      // Build update object
+      const updateFields: Partial<typeof users.$inferInsert> = {
+        username,
+        email,
+        role,
+        packageType,
+      };
+
+      // Optional: update password if provided
+      if (password && password.length >= 6) {
+        updateFields.password = await hashPassword(password);
+        updateFields.mustChangePassword = true;
+      }
+
+      // Update user in DB
+      const [updatedUser] = await db
+        .update(users)
+        .set(updateFields)
+        .where(eq(users.id, userId))
         .returning();
 
-      // Remove sensitive information before sending response
-      const { password: _, ...userWithoutPassword } = newUser;
-      res.status(201).json(userWithoutPassword);
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.status(200).json(userWithoutPassword);
     } catch (error) {
-      console.error("Error creating user:", error);
-      res.status(500).send("Failed to create user");
+      console.error("Error updating user:", error);
+      res.status(500).send("Failed to update user");
     }
   });
+
 
   // Add password change endpoint
   app.post("/api/user/change-password", isAuthenticated, async (req, res) => {
@@ -528,7 +543,6 @@ export function registerRoutes(app: Express): Server {
       );
 
       const formattedHabits = Object.values(groupedHabits);
-      console.log("Found habits for user:", formattedHabits);
       res.json(formattedHabits);
     } catch (error) {
       console.error("Error fetching habits:", error);
@@ -611,6 +625,89 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/habits/:habitId/completions", isAuthenticated, async (req, res) => {
+    const { habitId } = req.params;
+    const { completedAt, completed } = req.body;
+
+    if (!req.user) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    // Validate habitId
+    const parsedHabitId = parseInt(habitId);
+    if (isNaN(parsedHabitId)) {
+      return res.status(400).send("Invalid habit ID");
+    }
+
+    // Validate and normalize completedAt date
+    const rawDate = new Date(completedAt);
+    if (isNaN(rawDate.getTime())) {
+      return res.status(400).send("Invalid completedAt date");
+    }
+    const utcDate = new Date(Date.UTC(
+      rawDate.getUTCFullYear(),
+      rawDate.getUTCMonth(),
+      rawDate.getUTCDate()
+    ));
+
+    const formattedDate = formatInTimeZone(utcDate, 'UTC', 'yyyy-MM-dd');
+
+
+    try {
+      // Check if the habit belongs to the user
+      const habit = await db
+        .select()
+        .from(habits)
+        .where(and(eq(habits.id, parsedHabitId), eq(habits.userId, req.user.id)))
+        .limit(1);
+
+      if (!habit.length) {
+        return res.status(404).send("Habit not found or not authorized");
+      }
+
+      // Check for an existing completion on the same day
+      const existingCompletion = await db
+        .select()
+        .from(habitCompletions)
+        .where(and(
+          eq(habitCompletions.habitId, parsedHabitId),
+          sql`DATE(${habitCompletions.completedAt}) = ${formattedDate}`
+        ))
+        .limit(1);
+
+      let result;
+
+      if (existingCompletion.length > 0) {
+        // Update the existing completion
+        [result] = await db
+          .update(habitCompletions)
+          .set({ completed })
+          .where(eq(habitCompletions.id, existingCompletion[0].id))
+          .returning();
+
+      } else {
+        [result] = await db
+          .insert(habitCompletions)
+          .values({
+            habitId: parsedHabitId,
+            completedAt: utcDate,
+            completed,
+            userId: req.user.id,
+          })
+          .returning();
+      }
+
+      // If no completion exists for the given date, return 404
+      return res.json(result);
+    } catch (error) {
+      console.error("Error updating completion:", error);
+      res.status(500).send("Server error updating completion");
+    }
+  });
+
+
+
+
   // Update a habit
   app.put("/api/habits/:id", isAuthenticated, async (req, res) => {
     if (!req.user) {
@@ -668,8 +765,8 @@ export function registerRoutes(app: Express): Server {
       }
 
       await db
-      .delete(habitConversations)
-      .where(eq(habitConversations.habitId, habitId));
+        .delete(habitConversations)
+        .where(eq(habitConversations.habitId, habitId));
 
       // Delete the habit completions first (due to foreign key constraint)
       await db
@@ -684,7 +781,7 @@ export function registerRoutes(app: Express): Server {
         .delete(habitInsights)
         .where(eq(habitInsights.habitId, habitId));
 
-        await db
+      await db
         .delete(habitReminders)
         .where(eq(habitReminders.habitId, habitId));
 
@@ -960,8 +1057,7 @@ ${browserInfo}
         // Destructure the packageType from the request body
         const { packageType } = req.body;
 
-        console.log('PACKAGE TYPE: ', packageType);
-        if(!packageType){
+        if (!packageType) {
           return res.status(500).json({ error: "Package type is required" });
         }
 
@@ -1035,57 +1131,74 @@ ${browserInfo}
     }
   );
 
-  app.delete("/api/delete-user",isAuthenticated, async (req, res, next) => {
+  app.delete("/api/delete-user", isAuthenticated, async (req, res, next) => {
     if (!req.user) {
       return res.status(401).send("Not authenticated");
     }
 
     try {
       const userId = req.user.id;
-  
       // Check if the user exists in the database
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
-  
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-  
       // Check if the user has a Stripe customer ID
       if (!user.stripeCustomerId) {
         return res.status(400).json({ error: "User does not have an associated Stripe customer" });
       }
-  
       // Cancel the user's subscription on Stripe
       const subscriptions = await stripe.subscriptions.list({
         customer: user.stripeCustomerId,
         status: 'active',
         limit: 1,
       });
-  
       if (subscriptions.data.length > 0) {
         const subscription = subscriptions.data[0];
-  
         // Cancel the active subscription
         await stripe.subscriptions.cancel(subscription.id);
       }
-  
-      // Optionally, delete the Stripe customer (if desired)
-      // await stripe.customers.de(user.stripeCustomerId);
-  
-      // Remove user's subscriptions (if needed for local record keeping)
-     
-  
+
+      const allHabits = await db
+        .select()
+        .from(habits)
+        .where(eq(habits.userId, userId));
+
+      for (const habit of allHabits) {
+        await db
+          .delete(habitConversations)
+          .where(eq(habitConversations.habitId, habit.id));
+
+        await db
+          .delete(habitCompletions)
+          .where(eq(habitCompletions.habitId, habit.id));
+
+        await db
+          .delete(habitResponses)
+          .where(eq(habitResponses.habitId, habit.id));
+
+        await db
+          .delete(habitInsights)
+          .where(eq(habitInsights.habitId, habit.id));
+
+        await db
+          .delete(habitReminders)
+          .where(eq(habitReminders.habitId, habit.id));
+      }
+
+      await db
+        .delete(habits)
+        .where(eq(habits.userId, userId));
+
       // Remove the user from the database
       await db
         .delete(users)
         .where(eq(users.id, userId));
-  
       res.status(200).json({ message: "User and subscriptions successfully deleted from database and Stripe" });
-  
     } catch (error) {
       console.error("Delete user error:", error);
       res.status(500).json({ error: "Failed to delete user and subscriptions. Please try again." });

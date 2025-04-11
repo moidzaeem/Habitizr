@@ -11,6 +11,7 @@ export interface Tier {
 export const TIERS = {
   PATHFINDER: "pathfinder",
   TRAILBLAZER: "trailblazer",
+  BASIC:"basic",
   FREE: "free",
   ADMIN: "admin",
 } as const;

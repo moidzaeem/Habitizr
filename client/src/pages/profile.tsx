@@ -93,7 +93,7 @@ export default function Profile() {
   const isTrialExpired = !isInTrialPeriod;
 
   useEffect(() => {
-    if (isTrialExpired) {
+    if (user?.packageType !== TIERS.FREE &&  isTrialExpired) {
       setShowUpgradeModal(true); // Show modal if trial expired
     }
   }, [isTrialExpired]);
@@ -204,7 +204,7 @@ export default function Profile() {
 
       // Redirect to login or home page after account deletion (if necessary)
       // Example:
-      // window.location.href = "/login";
+      window.location.href = "/auth";
 
     } catch (error) {
       console.error("Error deleting account:", error);
@@ -293,23 +293,30 @@ export default function Profile() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Subscription Information Card */}
-            <Card className="border shadow-lg lg:col-span-2">
+            {user?.role !== 'admin' && <Card className="border shadow-lg lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-6 w-6" />
                   Subscription Details
                 </CardTitle>
                 <CardDescription>
-                  Your current plan and subscription status {' '}
-                  {isTrialExpired && user?.stripeSubscriptionStatus !== 'active' ? (
+                  Your current plan and subscription status{' '}
+                  {user?.packageType !== TIERS.FREE &&
+                    isTrialExpired &&
+                    user?.stripeSubscriptionStatus !== 'active' ? (
                     <span
                       onClick={() => setShowUpgradeModal(true)}
                       className="text-red-500 cursor-pointer"
                     >
                       (TRIAL EXPIRED) Click here to upgrade
                     </span>
-                  ) : 'is in Trail'}
+                  ) : user?.packageType === TIERS.FREE ? (
+                    ' is FREE'
+                  ) : (
+                    ' is in Trial'
+                  )}
                 </CardDescription>
+
 
               </CardHeader>
               {user?.stripeSubscriptionStatus === 'active' && (
@@ -391,7 +398,7 @@ export default function Profile() {
                 </CardContent>
               )}
 
-            </Card>
+            </Card>}
 
             {/* Account Settings Card */}
             <Card className="border shadow-lg lg:col-span-2">

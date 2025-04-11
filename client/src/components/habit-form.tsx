@@ -37,7 +37,11 @@ const habitSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   frequency: z.enum(["daily", "semi-daily", "weekly"]),
-  selectedDays: z.array(z.number()).optional(),
+  selectedDays: z.array(z.number(), {
+    required_error: 'You must select at least one day.',
+    invalid_type_error: 'Days must be an array of numbers.',
+  })
+    .optional(), // Remove this if the field should always be required
   reminderTime: z.string().min(1, "Reminder time is required"),
   timezone: z.string().min(1, "Timezone is required"),
 });
@@ -54,7 +58,11 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
     useHabits();
   const { user } = useUser();
   const { toast } = useToast();
-
+  if (initialData?.selectedDays) {
+    initialData.selectedDays = initialData.selectedDays.map((day: any) =>
+      typeof day === 'string' ? parseInt(day, 10) : day
+    );
+  }
   const form = useForm<HabitFormData>({
     resolver: zodResolver(habitSchema),
     defaultValues: initialData || {
@@ -68,7 +76,6 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
   });
 
   const onSubmit = async (data: HabitFormData) => {
-    // console.log(data);
     // return;
     try {
       const tier = user?.packageType || TIERS.PATHFINDER;
@@ -154,7 +161,14 @@ export default function HabitForm({ initialData, onSuccess }: HabitFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(async (data) => {
+        try {
+          await onSubmit(data);
+        } catch (error) {
+          console.error('Submission error:', error);
+          // Optionally show an error to the user here
+        }
+      })} className="space-y-6">
         <FormField
           control={form.control}
           name="name"

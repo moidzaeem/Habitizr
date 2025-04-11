@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
   Table,
@@ -42,6 +42,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { TIERS } from "@/lib/tiers";
+import { Checkbox } from "@/components/ui/checkbox";
+import passport from "passport";
+
 
 async function fetchUsers(): Promise<User[]> {
   const response = await fetch('/api/admin/users', {
@@ -62,6 +65,10 @@ const createUserSchema = z.object({
   isAdmin: z.boolean().default(false),
 });
 
+const updateUserSchema = createUserSchema.omit({ password: true });
+
+
+
 type CreateUserFormData = z.infer<typeof createUserSchema>;
 
 export default function AdminDashboard() {
@@ -69,6 +76,10 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
 
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -136,6 +147,52 @@ export default function AdminDashboard() {
       });
     },
   });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async (updatedUser: { id: number } & Partial<CreateUserFormData>) => {
+      const response = await fetch(`/api/admin/users/${updatedUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUser),
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to update user');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast({ title: "User updated successfully" });
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleEdit = (userId: number) => {
+    console.log('WAAAA', userId);
+    const user = users.find((u) => u.id === userId);
+    if (user) {
+      setSelectedUser(user);
+      setEditDialogOpen(true);
+    }
+  };
+  useEffect(() => {
+    if (selectedUser) {
+      form.reset({
+        username: selectedUser.username,
+        email: selectedUser.email || "",
+        role: selectedUser.role,
+        passport:"",
+        packageType: selectedUser.packageType,
+        password: "", // intentionally blank for updates
+        isAdmin: selectedUser.role === "admin",
+      });
+    }
+  }, [selectedUser, form]);
+
+
 
   const onSubmit = (data: CreateUserFormData) => {
     createUserMutation.mutate(data);
@@ -349,14 +406,23 @@ export default function AdminDashboard() {
                       <TableCell>{user.packageType}</TableCell>
                       <TableCell>
                         <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(user.id)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => deleteUserMutation.mutate(user.id)}
                           disabled={user.role === 'admin'} // Prevent deleting admin users
+                          className="ml-2"
                         >
                           Delete
                         </Button>
                       </TableCell>
+
                     </TableRow>
                   ))}
                 </TableBody>
@@ -365,6 +431,124 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+      {selectedUser && (
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>Update user details</DialogDescription>
+            </DialogHeader>
+            <form
+             onSubmit={form.handleSubmit(
+              (data) => {
+                console.log("✅ Submit fired", data);
+                if (selectedUser) {
+                  updateUserMutation.mutate({ ...data, id: selectedUser.id });
+                }
+              },
+              (errors) => {
+                console.log("❌ Validation errors:", errors);
+              }
+            )}
+            
+              className="space-y-4"
+            >
+              <Form {...form}>
+
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl><Input type="email" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl><Input type="password" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="packageType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Package Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value={TIERS.PATHFINDER}>Pathfinder</SelectItem>
+                          <SelectItem value={TIERS.TRAILBLAZER}>Trailblazer</SelectItem>
+                          <SelectItem value="free">Free</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isAdmin"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => field.onChange(checked)}
+                        />
+                      </FormControl>
+                      <FormLabel>Is Admin</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full">
+                  {updateUserMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update User"}
+                </Button>
+
+              </Form>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
+
   );
 }

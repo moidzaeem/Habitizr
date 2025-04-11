@@ -92,7 +92,7 @@ export default function NavBar({ showAuthButtons = true }: NavBarProps) {
           {/* Navigation Controls */}
           <div className="flex items-center gap-4">
             {/* Subscription Upgrade Button (Pathfinder users only) */}
-            {user?.packageType === TIERS.PATHFINDER && (
+            {user?.role !=='admin' && user?.packageType === TIERS.PATHFINDER && (
               <Button
                 variant="default"
                 className="bg-gradient-to-r from-primary to-blue-600 text-white hover:opacity-90 gap-2"
