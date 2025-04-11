@@ -1,0 +1,92 @@
+/* Custom Styles for Habit Calendar */
+
+/* General Calendar Container */
+.habit-calendar-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Styling the Calendar */
+.react-calendar {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Arial', sans-serif;
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Customizing the navigation arrows and month */
+.react-calendar__navigation {
+    background-color: #4caf50;
+    color: white;
+    border-radius: 5px;
+}
+
+/* Customizing the month name */
+.react-calendar__month-view__weekdays {
+    background-color: #e3e3e3;
+}
+
+/* Highlighting the selected date */
+.react-calendar__tile--active {
+    background-color: #252a25 !important;
+    color: white !important;
+}
+
+/* Marking a completed habit */
+.completed {
+    background-color: #4caf50 !important; /* Green for completed habits */
+    color: white !important;
+}
+
+/* Marking a missed habit */
+.missed {
+    background-color: #f44336 !important; /* Red for missed habits */
+    color: white !important;
+}
+
+/* Adding hover effect to the tiles */
+.react-calendar__tile:hover {
+    background-color: #e0e0e0 !important;
+    cursor: pointer;
+}
+
+/* Changing the appearance of the current date */
+.react-calendar__tile--now {
+    border: 2px solid #4caf50;
+    background-color: #e0f7e3;
+    color: #4caf50;
+    font-weight: bold;
+}
+
+/* Optional: Make the calendar font size a little larger */
+.react-calendar__tile {
+    font-size: 14px;
+}
+
+/* Optional: Style the tiles' number and labels */
+.react-calendar__month-view__days__day {
+    font-size: 16px;
+    font-weight: bold;
+}
+/* Styles for completed days */
+.react-calendar__tile.completed {
+    background-color: #4ade80 !important; /* green */
+    color: white !important;
+    border-radius: 6px;
+  }
+  
+  /* Styles for missed days */
+  .react-calendar__tile.missed {
+    background-color: #f87171 !important; /* red */
+    color: white !important;
+    border-radius: 6px;
+  }
+  
+  
