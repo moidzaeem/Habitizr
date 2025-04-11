@@ -40,7 +40,8 @@ export function startReminderScheduler() {
           !habit.reminderTime ||
           !user.phoneVerified ||
           user?.stripeSubscriptionStatus === 'canceled' ||
-          user?.stripeSubscriptionStatus === '' ||
+          user?.stripeSubscriptionStatus == '' ||
+          user?.stripeSubscriptionStatus == null ||
           user?.stripeSubscriptionStatus === 'incomplete_expired'
         ) {
           continue;

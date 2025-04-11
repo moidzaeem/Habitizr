@@ -64,6 +64,7 @@ import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { SubscriptionComparison } from "@/components/subscription-comparison";
 import { ProblemReportForm } from "@/components/problem-report-form";
 import { SMSOptin, TermsDialog } from "@/components/policy-dialogs";
+import HabitCalendar from "@/components/habit-calander";
 
 // Keep only milestone achievements but make them locked by default
 const achievements = [
@@ -71,9 +72,11 @@ const achievements = [
     id: 3,
     name: "Habit Pioneer",
     description: "Create your first habit",
-    icon: <Medal className="h-8 w-8" />,
+    icon: <img src="/attached_assets/badge.png"
+      alt="Person working on computer" className="h-10 w-10 object-contain"
+    />,
     category: "Milestones",
-    unlocked: false,
+    unlocked: true,
     progress: 0,
   },
   {
@@ -614,6 +617,9 @@ export default function Dashboard() {
                       </div>
                     </CardContent>
                   </Card>
+                  {selectedHabit?.id === habit.id && habit && (
+                    <HabitCalendar habit={habit} />
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -631,20 +637,18 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {achievements.map((achievement) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {achievements.map((achievement, index) => (
                     <div
                       key={achievement.id}
-                      className={`flex items-start space-x-4 p-3 rounded-lg transition-colors ${achievement.unlocked ? "bg-primary/10" : "bg-muted/50"
+                      className={`flex items-start space-x-4 p-4 rounded-lg transition-colors ${(habits.length && index == 0) ? "bg-primary/10" : "bg-muted/50"
                         }`}
                     >
                       <div
-                        className={`shrink-0 ${achievement.unlocked
-                          ? "text-primary"
-                          : "text-muted-foreground"
+                        className={`shrink-0 ${habits.length ? "text-primary" : "text-muted-foreground"
                           }`}
                       >
-                        {achievement.unlocked ? (
+                        {habits.length ? (
                           achievement.icon
                         ) : (
                           <Lock className="h-10 w-10" />
@@ -655,15 +659,14 @@ export default function Dashboard() {
                         <p className="text-sm text-muted-foreground">
                           {achievement.description}
                         </p>
-                        {!achievement.unlocked &&
-                          achievement.progress < 100 && (
-                            <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-                              <div
-                                className="bg-primary h-1.5 rounded-full transition-all"
-                                style={{ width: `${achievement.progress}%` }}
-                              />
-                            </div>
-                          )}
+                        {!achievement.unlocked && achievement.progress < 100 && (
+                          <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                            <div
+                              className="bg-primary h-1.5 rounded-full transition-all"
+                              style={{ width: `${achievement.progress}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

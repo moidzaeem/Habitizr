@@ -56,29 +56,45 @@ app.post('/api/push-notification', (req, res) => {
   
   const { fcmToken, title, body } = req.body;
 
-  if (!fcmToken || !title || !body) {
-    return res.status(400).json({ message: 'FCM token, title, and body are required' });
-  }
+if (!fcmToken || !title || !body) {
+  return res.status(400).json({ message: 'FCM token, title, and body are required' });
+}
 
-  const message = {
-    token: fcmToken,
-    notification: {
-      title: title,
-      body: body,
+const message = {
+  token: fcmToken,
+  notification: {
+    title: title,
+    body: body,
+  },
+  apns: {
+    headers: {
+      'apns-priority': '10',              // 10 = Immediate delivery
+      'apns-push-type': 'alert',          // Required for iOS 13+
+      'apns-topic': 'com.habitizr.habitizrapp'  // <-- Change to your actual app's bundle ID
+    },
+    payload: {
+      aps: {
+        alert: {
+          title: title,
+          body: body,
+        },
+        sound: 'default',                 // Optional: enables sound
+        badge: 10                          // Optional: badge number
+      }
     }
-  };
-  // Send a message to the device corresponding to the provided
-  // registration token.
-  messaging.send(message)
-    .then((response) => {
-      // Response is a message ID string.
-      console.log('Successfully sent message:', response);
-      return res.status(200).json({ succes:true });
-    })
-    .catch((error) => {
-      console.log('Error sending message:', error);
-      return res.status(500).json({ success:false });
-    });
+  }
+};
+
+messaging.send(message)
+  .then((response) => {
+    console.log('Successfully sent message:', response);
+    return res.status(200).json({ success: true });
+  })
+  .catch((error) => {
+    console.log('Error sending message:', error);
+    return res.status(500).json({ success: false });
+  });
+
   
   // messaging.send(message)
   //   .then((response) => {

@@ -224,8 +224,9 @@ export default function AuthPage() {
                     )}
                   </AnimatePresence>
 
-                  <div className="space-y-8">
-                    <div className=" justify-center items-center d-flex">
+                  <div className="space-y-8 w-full">
+                    <GoogleSignIn />
+                    <div className=" flex justify-center items-center">
                       <AppleSignin
                         authOptions={{
                           clientId: 'com.habitizr.habitizrapp',
@@ -237,7 +238,7 @@ export default function AuthPage() {
                         }}
                         uiType="dark"
                         
-                        className="apple-auth-btn text-center align-items-center d-flex"
+                        className="apple-auth-btn "
                         // Removes default style tag
                         noDefaultStyle={false}
                         // Allows changing the button's children text
@@ -256,7 +257,6 @@ export default function AuthPage() {
                       // render={(props) => <button {...props}>My Custom Button</button>}
                       />
                     </div>
-                    <GoogleSignIn />
 
 
 

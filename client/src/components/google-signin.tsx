@@ -34,7 +34,7 @@ const GoogleSignIn = () => {
                         onError={handleError}
                         useOneTap
                         theme="filled_blue"
-                        shape="pill"
+                        // shape="pill"
                         width="300"
                         className="py-2 px-4 rounded-full flex justify-center items-center border border-gray-300 hover:bg-gray-100"
                     >

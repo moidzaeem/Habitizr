@@ -190,9 +190,9 @@ const Landing = () => {
               className="space-y-12"
             >
               <div className="space-y-6">
-              <h2 className="text-5xl md:text-7xl font-black bg-clip-text text-[#257aab] tracking-tight leading-[1.1]">
-  Transform Your Life Through Better Habits
-</h2>
+                <h2 className="text-5xl md:text-7xl font-black bg-clip-text text-[#257aab] tracking-tight leading-[1.1]">
+                  Transform Your Life Through Better Habits
+                </h2>
 
                 <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-200 leading-relaxed font-medium">
                   Whether you're looking to build positive habits or break free from negative ones,
@@ -231,7 +231,7 @@ const Landing = () => {
               <div className="absolute -top-8 -right-8 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
               <div className="section-card overflow-hidden rounded-2xl border border-primary/10 shadow-lg hover:shadow-xl transition-all duration-300">
                 <img
-                  src="/attached_assets/pexels-tima-miroshnichenko-6670748.jpg"
+                  src="/attached_assets/sms4.jpeg"
                   alt="Person working on computer"
                   className="w-full h-[calc(100vh_-_400px)] object-cover"
                 />
@@ -472,11 +472,10 @@ const Landing = () => {
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-5 h-5 ${
-                                i < testimonial.rating
+                              className={`w-5 h-5 ${i < testimonial.rating
                                   ? "text-yellow-400 fill-yellow-400"
                                   : "text-gray-300"
-                              }`}
+                                }`}
                             />
                           ))}
                         </div>
