@@ -860,47 +860,6 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  // Temporary endpoint for testing SMS
-  app.post("/api/test-sms/:username", async (req, res) => {
-    try {
-      // Get user and their active habit
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, req.params.username))
-        .limit(1);
-
-      if (!user) {
-        return res.status(404).send("User not found");
-      }
-
-      const [habit] = await db
-        .select()
-        .from(habits)
-        .where(and(eq(habits.userId, user.id), eq(habits.isRunning, true)))
-        .limit(1);
-
-      if (!habit) {
-        return res.status(404).send("No active habits found for user");
-      }
-
-      // Add user data to habit for SMS sending
-      const habitWithUser = {
-        ...habit,
-        user: {
-          ...user,
-          phoneNumber: user.phoneNumber,
-        },
-      };
-
-      await sendHabitReminder(habitWithUser);
-      res.status(200).send("Test SMS sent successfully");
-    } catch (error) {
-      console.error("Error sending test SMS:", error);
-      res.status(500).send("Error sending test SMS");
-    }
-  });
-
   app.post("/api/report-problem", async (req, res) => {
     try {
       const {

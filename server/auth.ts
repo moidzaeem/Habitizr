@@ -11,6 +11,8 @@ import { eq, or, and, gt } from "drizzle-orm";
 import { TIERS } from "@/lib/tiers";
 import { OAuth2Client } from 'google-auth-library';
 import { sendPasswordResetEmail, sendVerificationEmail } from "./email";
+import jwksClient from 'jwks-rsa';
+import jwt from 'jsonwebtoken';
 
 const scryptAsync = promisify(scrypt);
 const crypto = {
@@ -135,7 +137,6 @@ export function setupAuth(app: Express) {
     }
     res.status(200).json(req.user);
   });
-  
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
@@ -302,6 +303,10 @@ export function setupAuth(app: Express) {
         .limit(1);
 
       if (existingUser) {
+        if (req.body?.fcmToken) {
+          await db.update(users).set({ fcm: req.body.fcmToken }).where(eq(users.id, existingUser.id));
+        }
+
         // Step 3: If the user exists, log them in (send back user data)
         req.login(existingUser, (err) => {
           if (err) {
@@ -325,7 +330,8 @@ export function setupAuth(app: Express) {
             packageType: TIERS.PATHFINDER, // Default package
             role: 'user',
             createdAt: new Date(),
-            password: hashedPassword
+            password: hashedPassword,
+            fcm: req.body?.fcmToken || null // Save the FCM token if provided
 
           })
           .returning();
@@ -366,6 +372,9 @@ export function setupAuth(app: Express) {
 
       if (existingUser) {
         // Step 3: If the user exists, log them in (send back user data)
+        if (req.body?.fcmToken) {
+          await db.update(users).set({ fcm: req.body.fcmToken }).where(eq(users.id, existingUser.id));
+        }
         req.login(existingUser, (err) => {
           if (err) {
             return res.status(500).json({ message: 'Login failed', error: err });
@@ -386,7 +395,8 @@ export function setupAuth(app: Express) {
             packageType: TIERS.PATHFINDER, // Default package
             role: 'user',
             createdAt: new Date(),
-            password: hashedPassword
+            password: hashedPassword,
+            fcm: req.body?.fcmToken || null // Save the FCM token if provided
 
           })
           .returning();
@@ -406,6 +416,86 @@ export function setupAuth(app: Express) {
     }
   });
 
+  const client = jwksClient({
+    jwksUri: 'https://appleid.apple.com/auth/keys',
+  });
+
+  function getAppleSigningKey(header: { kid: string | null | undefined; }, callback: (arg0: null, arg1: string) => void) {
+    client.getSigningKey(header.kid, function (err, key) {
+      const signingKey = key.getPublicKey();
+      callback(null, signingKey);
+    });
+  }
+  
+
+  // FOR DESKTOp
+  app.post('/auth/apple', async (req, res) => {
+    const { token } = req.body;
+  
+    if (!token) return res.status(400).json({ message: 'Missing token' });
+  
+    // Verify Apple ID token
+    jwt.verify(token, getAppleSigningKey, {
+      algorithms: ['RS256'],
+      issuer: 'https://appleid.apple.com',
+    }, async (err: any, payload: { sub: any; email: any; firstName: any; lastName: any; }) => {
+      if (err) {
+        return res.status(401).json({ message: 'Invalid Apple token', error: err });
+      }
+      console.log('Decoded Apple ID Token:', payload);
+
+  
+      const appleId = payload.sub;
+      const email = payload.email; // May be missing on repeat logins
+      const name = `${payload.firstName ?? ''} ${payload.lastName ?? ''}`.trim() || 'Apple User';
+  
+      // Find existing user
+      const [existingUser] = await db
+        .select()
+        .from(users)
+        .where(
+          or(
+            eq(users.provider, 'apple'),
+            eq(users.providerId, appleId)
+          )
+        )
+        .limit(1);
+  
+      if (existingUser) {
+        
+  
+        req.login(existingUser, (err) => {
+          if (err) return res.status(500).json({ message: 'Login failed', error: err });
+          return res.status(200).json({ message: 'Login successful', user: req.user });
+        });
+      } else {
+        // Register new user
+        const hashedPassword = await crypto.hash('123245678');
+  
+        const [user] = await db
+          .insert(users)
+          .values({
+            username: name,
+            email,
+            provider: 'apple',
+            providerId: appleId,
+            emailVerified: !!email,
+            picture: null,
+            packageType: TIERS.PATHFINDER,
+            role: 'user',
+            createdAt: new Date(),
+            password: hashedPassword,
+
+          })
+          .returning();
+  
+        req.login(user, (err) => {
+          if (err) return res.status(500).json({ message: 'Login failed', error: err });
+          return res.status(200).json({ message: 'Login successful', user: req.user });
+        });
+      }
+    });
+  });
   app.post('/api/forgot-password', async (req, res) => {
     const { email } = req.body;
 

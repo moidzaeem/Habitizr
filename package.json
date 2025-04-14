@@ -65,6 +65,8 @@
     "framer-motion": "^11.13.1",
     "google-auth-library": "^9.15.1",
     "input-otp": "^1.2.4",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.2.0",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",
     "moment-timezone": "^0.5.47",

@@ -245,7 +245,22 @@ export default function AuthPage() {
                         buttonExtraChildren="Continue with Apple"
                         // Extra controlling props
                         // Called upon sign-in success if authOptions.usePopup = true
-                        onSuccess={(response) => console.log(response)}
+                        onSuccess={(response) => {
+                          // Send response.authorization.id_token to backend
+                          fetch('/api/auth/apple', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: response.authorization.id_token }),
+                          })
+                            .then(res => res.json())
+                            .then(data => {
+                              // Handle user session here, maybe save JWT or redirect
+                              console.log('User authenticated:', data);
+                            })
+                            .catch(err => {
+                              console.error('Backend error:', err);
+                            });
+                        }}
                         // Called upon sign-in error
                         onError={(error) => console.error(error)}
                         // Skips loading the Apple script if true
