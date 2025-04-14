@@ -454,7 +454,7 @@ export function setupAuth(app: Express) {
         .select()
         .from(users)
         .where(
-          or(
+          and(
             eq(users.provider, 'apple'),
             eq(users.providerId, appleId)
           )
@@ -480,7 +480,6 @@ export function setupAuth(app: Express) {
             provider: 'apple',
             providerId: appleId,
             emailVerified: !!email,
-            picture: null,
             packageType: TIERS.PATHFINDER,
             role: 'user',
             createdAt: new Date(),
