@@ -1106,7 +1106,7 @@ ${browserInfo}
             packageType: 'basic',
           })
           .where(eq(users.stripeCustomerId, customerId));
-          res.status(200).json({ success:true, needClientSeceret: false });
+         return res.status(200).json({ success:true, needClientSeceret: false });
         }
 
         const priceId = packageType === TIERS.TRAILBLAZER ? trailblazer : pathFinder;
