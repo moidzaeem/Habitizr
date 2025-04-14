@@ -1098,6 +1098,17 @@ ${browserInfo}
         }
 
         // Ensure the packageType is valid
+        if(packageType === 'basic'){
+          await db
+          .update(users)
+          .set({
+            stripeSubscriptionStatus: "active", // Mark the status as canceled
+            packageType: 'basic',
+          })
+          .where(eq(users.stripeCustomerId, customerId));
+          res.status(200).json({ success:true, needClientSeceret: false });
+        }
+
         const priceId = packageType === TIERS.TRAILBLAZER ? trailblazer : pathFinder;
         if (!priceId) {
           return res.status(400).json({ error: "Invalid package type" });
