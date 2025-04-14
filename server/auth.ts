@@ -388,7 +388,7 @@ export function setupAuth(app: Express) {
         const [user] = await db
           .insert(users)
           .values({
-            username: name,   // Set the username to the Google user's name
+            username: name?.trim() || `user_${Date.now()}`,
             email,
             provider: 'apple',
             emailVerified: true,
