@@ -256,6 +256,9 @@ export default function AuthPage() {
                             .then(data => {
                               // Handle user session here, maybe save JWT or redirect
                               console.log('User authenticated:', data);
+                              setTimeout(() => {
+                                window.location.href = '/'
+                            }, 1000)
                             })
                             .catch(err => {
                               console.error('Backend error:', err);
