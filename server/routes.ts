@@ -1061,6 +1061,8 @@ ${browserInfo}
           return res.status(500).json({ error: "Package type is required" });
         }
 
+        console.log('SERVER PACCKGE: ', packageType);
+
         // Check if user is authenticated
         if (!req.user) {
           return res.status(401).json({ error: "Not authenticated" });
