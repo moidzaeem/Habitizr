@@ -429,7 +429,7 @@ export function setupAuth(app: Express) {
   
 
   // FOR DESKTOp
-  app.post('/auth/apple', async (req, res) => {
+  app.post('/api/auth/apple', async (req, res) => {
     const { token } = req.body;
   
     if (!token) return res.status(400).json({ message: 'Missing token' });
