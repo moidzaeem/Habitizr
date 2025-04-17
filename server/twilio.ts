@@ -12,6 +12,10 @@ import {
   habitReminders
 } from '@db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { getMessaging, Messaging } from "firebase-admin/messaging";
+import { initializeApp, cert } from "firebase-admin/app";
+import fs from 'fs';
+import path from 'path';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-01-27.acacia',
@@ -25,6 +29,27 @@ const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TO
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+let messaging: Messaging;
+
+try {
+  const serviceAccount = JSON.parse(fs.readFileSync(path.resolve('./habitizr-778e7-firebase-adminsdk-fbsvc-07eb0eff80.json'), 'utf8'));
+
+  const FCM_PUSH = initializeApp({
+    credential: cert(serviceAccount),
+    databaseURL: 'https://habitizr-778e7.firebaseio.com',
+
+  });
+  messaging = getMessaging(FCM_PUSH); // This will give you access to messaging functionality
+
+
+  console.log("Firebase Admin SDK initialized successfully");
+
+} catch (error) {
+  console.error("Error initializing Firebase Admin SDK:", error);
+}
+
+
 
 async function getConversationHistory(habitId: number, userId: number, limit = 5) {
   const history = await db
@@ -275,13 +300,18 @@ export async function sendHabitReminder(habit: any) {
     });
 
     // Send the message via Twilio
-    const twilioResponse = await client.messages.create({
-      body: message,
-      to: habit.user.phoneNumber,
-      from: process.env.TWILIO_PHONE_NUMBER
-    });
+    if (user.packageType !== 'basic') {
+      const twilioResponse = await client.messages.create({
+        body: message,
+        to: habit.user.phoneNumber,
+        from: process.env.TWILIO_PHONE_NUMBER
+      });
+      console.log('Twilio message sent successfully:', twilioResponse.sid);
+    }
 
-    console.log('Twilio message sent successfully:', twilioResponse.sid);
+    if (user.fcm) {
+      sendPushNotification(user.fcm, habit.name, message);
+    }
 
     // Schedule follow-up message after 15 minutes
     // setTimeout(async () => {
@@ -617,4 +647,47 @@ export async function storeInsights(habitId: number, userId: number, insights: a
       });
     }
   }
+}
+
+function sendPushNotification(fcmToken: any, title: any, body: any) {
+
+  if (!fcmToken || !title || !body) {
+    return;
+  }
+
+  const message = {
+    token: fcmToken,
+    notification: {
+      title: title,
+      body: body,
+    },
+    apns: {
+      headers: {
+        'apns-priority': '10',              // 10 = Immediate delivery
+        'apns-push-type': 'alert',          // Required for iOS 13+
+        'apns-topic': 'com.habitizr.habitizrapp'  // <-- Change to your actual app's bundle ID
+      },
+      payload: {
+        aps: {
+          alert: {
+            title: title,
+            body: body,
+          },
+          sound: 'default',                 // Optional: enables sound
+          badge: 10                          // Optional: badge number
+        }
+      }
+    }
+  }
+
+  messaging.send(message)
+    .then((response) => {
+      console.log('Successfully sent message:', response);
+      return;
+    })
+    .catch((error) => {
+      console.log('Error sending message:', error);
+      return;
+    });
+
 }
