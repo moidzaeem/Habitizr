@@ -156,16 +156,20 @@ export function setupAuth(app: Express) {
     try {
       const { username, password, email } = req.body;
 
-      // Check if username already exists
       const [existingUser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, username))
-        .limit(1);
-
-      if (existingUser) {
-        return res.status(400).json({ error: "Username already exists" });
-      }
+      .select()
+      .from(users)
+      .where(
+        or(
+          eq(users.username, username),
+          eq(users.email, email)
+        )
+      )
+      .limit(1);
+    
+    if (existingUser) {
+      return res.status(400).json({ error: "Username or Email already exists" });
+    }
 
       const hashedPassword = await crypto.hash(password);
       const [user] = await db
