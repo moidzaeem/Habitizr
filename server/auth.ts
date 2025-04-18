@@ -185,7 +185,7 @@ export function setupAuth(app: Express) {
       res.status(200).json();
 
     } catch (error) {
-      console.error("Registration error:", error);
+      console.log("Registration error:", error);
       res.status(500).json({ error: "Registration failed. Please try again." });
     }
   });
