@@ -30,7 +30,7 @@ export async function sendVerificationEmail(userId: number, email: string) {
 
   verificationTokens.set(token, { userId, expiry });
 
-  const verificationUrl = `${process.env.APP_URL || "http://localhost:5000"}/verify-email?token=${token}`;
+  const verificationUrl = `${process.env.APP_URL || "http://localhost:5000"}/api/verify-email?token=${token}`;
   console.log("Verification URL: ", verificationUrl);
   try {
     const sss = await transporter.sendMail({

@@ -121,7 +121,7 @@ app.use('/api/stripe', stripeRouter);
 // });
 
 
-app.get('/verify-email', async (req, res) => {
+app.get('/api/verify-email', async (req, res) => {
   try {
     // Get the token from the request params
     const token = req.query.token;
