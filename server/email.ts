@@ -31,18 +31,23 @@ export async function sendVerificationEmail(userId: number, email: string) {
   verificationTokens.set(token, { userId, expiry });
 
   const verificationUrl = `${process.env.APP_URL || "http://localhost:5000"}/verify-email?token=${token}`;
-
-  await transporter.sendMail({
-    from: '"Habitizr" <no-reply@habitizr.com>',
-    to: email,
-    subject: "Verify your email address",
-    html: `
+  console.log("Verification URL: ", verificationUrl);
+  try {
+    const sss = await transporter.sendMail({
+      from: '"Habitizr" <no-reply@habitizr.com>',
+      to: email,
+      subject: "Verify your email address",
+      html: `
       <h1>Welcome to Habitizr!</h1>
       <p>Please click the link below to verify your email address:</p>
       <a href="${verificationUrl}">${verificationUrl}</a>
       <p>This link will expire in 24 hours.</p>
     `,
-  });
+    });
+    console.log("Email sent: ", sss);
+  } catch (error) {
+console.log('ERROR WHILE SENDING EMAIL: ', error);
+  }
 }
 
 export async function verifyEmail(token: string): Promise<boolean> {

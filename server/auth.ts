@@ -211,16 +211,20 @@ export function setupAuth(app: Express) {
       const googleId = payload?.sub;  // Unique Google user ID
       const email = payload?.email;   // Google user email
       const name = payload?.name;     // Google user name
-      const picture = payload?.picture; // Google user profile picture
+      let username =  name?.trim() || `user_${Date.now()}`;
 
       // Step 2: Check if the Google user already exists in the database
       const [existingUser] = await db
         .select()
         .from(users)
-        .where(eq(users.provider, 'google'))  // First condition
-        .where(eq(users.providerId, googleId))  // Second condition (chained)
+        .where(
+          and(
+            googleId ? eq(users.providerId, googleId) : undefined,
+            eq(users.provider, 'google')
+          )
+        )
         .limit(1);
-
+      
       if (existingUser) {
         // Step 3: If the user exists, log them in (send back user data)
         req.login(existingUser, (err) => {
@@ -236,12 +240,11 @@ export function setupAuth(app: Express) {
         const [user] = await db
           .insert(users)
           .values({
-            username: name,   // Set the username to the Google user's name
+            username: username,   // Set the username to the Google user's name
             email,
             provider: 'google',
             providerId: googleId,  // Save the Google user ID as providerId
             emailVerified: true,
-            picture,
             packageType: TIERS.PATHFINDER, // Default package
             role: 'user',
             createdAt: new Date(),
@@ -288,6 +291,7 @@ export function setupAuth(app: Express) {
       const email = payload?.email;   // Google user email
       const name = payload?.name;     // Google user name
       const picture = payload?.picture; // Google user profile picture
+      let username =  name?.trim() || `user_${Date.now()}`;
 
       // Step 2: Check if the Google user already exists in the database
       const [existingUser] = await db
@@ -321,12 +325,11 @@ export function setupAuth(app: Express) {
         const [user] = await db
           .insert(users)
           .values({
-            username: name,   // Set the username to the Google user's name
+            username: username,   // Set the username to the Google user's name
             email,
             provider: 'google',
             providerId: googleId,  // Save the Google user ID as providerId
             emailVerified: true,
-            picture,
             packageType: TIERS.PATHFINDER, // Default package
             role: 'user',
             createdAt: new Date(),

@@ -14,24 +14,24 @@ dotenv.config();
 const app = express();
 startReminderScheduler();
 
-let messaging: Messaging;
+// let messaging: Messaging;
 
-try {
-  const serviceAccount = JSON.parse(fs.readFileSync(path.resolve('./habitizr-778e7-firebase-adminsdk-fbsvc-07eb0eff80.json'), 'utf8'));
+// try {
+//   const serviceAccount = JSON.parse(fs.readFileSync(path.resolve('./habitizr-778e7-firebase-adminsdk-fbsvc-07eb0eff80.json'), 'utf8'));
 
-  const FCM_PUSH = initializeApp({
-    credential: cert(serviceAccount),
-    databaseURL: 'https://habitizr-778e7.firebaseio.com',
+//   const FCM_PUSH = initializeApp({
+//     credential: cert(serviceAccount),
+//     databaseURL: 'https://habitizr-778e7.firebaseio.com',
   
-  });
-   messaging = getMessaging(FCM_PUSH); // This will give you access to messaging functionality
+//   });
+//    messaging = getMessaging(FCM_PUSH); // This will give you access to messaging functionality
   
 
-  console.log("Firebase Admin SDK initialized successfully");
+//   console.log("Firebase Admin SDK initialized successfully");
 
-} catch (error) {
-  console.error("Error initializing Firebase Admin SDK:", error);
-}
+// } catch (error) {
+//   console.error("Error initializing Firebase Admin SDK:", error);
+// }
 
 
 
@@ -52,73 +52,73 @@ app.use(express.urlencoded({ extended: false }));
 // Add Stripe routes
 app.use('/api/stripe', stripeRouter);
 
-app.post('/api/push-notification', (req, res) => {
+// app.post('/api/push-notification', (req, res) => {
   
-  const { fcmToken, title, body } = req.body;
+//   const { fcmToken, title, body } = req.body;
 
-if (!fcmToken || !title || !body) {
-  return res.status(400).json({ message: 'FCM token, title, and body are required' });
-}
+// if (!fcmToken || !title || !body) {
+//   return res.status(400).json({ message: 'FCM token, title, and body are required' });
+// }
 
-const message = {
-  token: fcmToken,
-  notification: {
-    title: title,
-    body: body,
-  },
-  apns: {
-    headers: {
-      'apns-priority': '10',              // 10 = Immediate delivery
-      'apns-push-type': 'alert',          // Required for iOS 13+
-      'apns-topic': 'com.habitizr.habitizrapp'  // <-- Change to your actual app's bundle ID
-    },
-    payload: {
-      aps: {
-        alert: {
-          title: title,
-          body: body,
-        },
-        sound: 'default',                 // Optional: enables sound
-        badge: 10                          // Optional: badge number
-      }
-    }
-  }
-};
+// const message = {
+//   token: fcmToken,
+//   notification: {
+//     title: title,
+//     body: body,
+//   },
+//   apns: {
+//     headers: {
+//       'apns-priority': '10',              // 10 = Immediate delivery
+//       'apns-push-type': 'alert',          // Required for iOS 13+
+//       'apns-topic': 'com.habitizr.habitizrapp'  // <-- Change to your actual app's bundle ID
+//     },
+//     payload: {
+//       aps: {
+//         alert: {
+//           title: title,
+//           body: body,
+//         },
+//         sound: 'default',                 // Optional: enables sound
+//         badge: 10                          // Optional: badge number
+//       }
+//     }
+//   }
+// };
 
-messaging.send(message)
-  .then((response) => {
-    console.log('Successfully sent message:', response);
-    return res.status(200).json({ success: true });
-  })
-  .catch((error) => {
-    console.log('Error sending message:', error);
-    return res.status(500).json({ success: false });
-  });
+// messaging.send(message)
+//   .then((response) => {
+//     console.log('Successfully sent message:', response);
+//     return res.status(200).json({ success: true });
+//   })
+//   .catch((error) => {
+//     console.log('Error sending message:', error);
+//     return res.status(500).json({ success: false });
+//   });
 
   
-  // messaging.send(message)
-  //   .then((response) => {
-  //     // Response is a message ID string.
-  //     console.log('Successfully sent message:', response);
-  //           return res.status(200).json({ message: 'Push notification sent successfully', response });
+//   // messaging.send(message)
+//   //   .then((response) => {
+//   //     // Response is a message ID string.
+//   //     console.log('Successfully sent message:', response);
+//   //           return res.status(200).json({ message: 'Push notification sent successfully', response });
 
-  //   })
-  //   .catch((error) => {
-  //     console.log('Error sending message:', error);
-  //   });
+//   //   })
+//   //   .catch((error) => {
+//   //     console.log('Error sending message:', error);
+//   //   });
   
 
-  // Send the push notification
-  // messaging.send(message)
-  //   .then((response) => {
-  //     console.log('Successfully sent message:', response);
-  //     return res.status(200).json({ message: 'Push notification sent successfully', response });
-  //   })
-  //   .catch((error) => {
-  //     console.error('Error sending message:', error);
-  //     return res.status(500).json({ message: 'Error sending push notification', error });
-  //   });
-});
+//   // Send the push notification
+//   // messaging.send(message)
+//   //   .then((response) => {
+//   //     console.log('Successfully sent message:', response);
+//   //     return res.status(200).json({ message: 'Push notification sent successfully', response });
+//   //   })
+//   //   .catch((error) => {
+//   //     console.error('Error sending message:', error);
+//   //     return res.status(500).json({ message: 'Error sending push notification', error });
+//   //   });
+// });
 
 
 app.get('/verify-email', async (req, res) => {
