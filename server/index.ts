@@ -123,23 +123,22 @@ app.use('/api/stripe', stripeRouter);
 
 app.get('/api/verify-email', async (req, res) => {
   try {
-    // Get the token from the request params
-    const token = req.query.token;
+    const token = req.query.token?.toString();
     console.log('TOKEN: ', token);
+
     if (!token) {
-      return res.status(400).json({ message: 'Token is required' });
+      return res.redirect('https://habitizr.com/auth?error=missing_token');
     }
-    // Call the verifyEmail function asynchronously
+
     await verifyEmail(token);
 
-    // If verification is successful, send a success response
-    res.status(200).json({ message: 'Email verified successfully' });
+    return res.redirect('https://habitizr.com/auth?verified=1');
   } catch (error) {
-    // If an error occurs, send an error response
     console.error('Error verifying email:', error);
-    res.status(500).json({ message: 'Error verifying email', error: error.message });
+    return res.redirect('https://habitizr.com/auth?error=verification_failed');
   }
 });
+
 
 
 app.use((req, res, next) => {
