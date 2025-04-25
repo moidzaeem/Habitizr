@@ -190,7 +190,7 @@ export function setupAuth(app: Express) {
 
     } catch (error) {
       console.log("Registration error:", error);
-      res.status(500).json({ error: "Registration failed. Please try again." });
+      res.status(500).json({ error: "Registration failed. Username/Email already exists." });
     }
   });
 

@@ -6,12 +6,15 @@ import { eq } from "drizzle-orm";
 
 // In production, use a real SMTP service
 const transporter = nodemailer.createTransport({
-  host: "mail.privateemail.com",
-  port: 587,
-  secure: false,
+  host: "email-smtp.us-west-1.amazonaws.com",
+  port: 587, // Use port 587 for TLS
+  secure: false, // Set to false because we are using STARTTLS
   auth: {
-    user: "no-reply@habitizr.com",
-    pass: "FuzzyEagles87$",
+    user: "AKIAYXWBNQTN75M4HWPG",
+    pass: "BGI/kQ22N1Z334AO1HeI8nKgFv5zSqM3Fu2+EhXnxPBn",
+  },
+  tls: {
+    rejectUnauthorized: false, // Set to true in production for stricter security
   },
 });
 
