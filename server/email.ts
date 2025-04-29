@@ -4,7 +4,7 @@ import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
 import mailchimp from '@mailchimp/mailchimp_transactional'
 
-const mailchimps = mailchimp('fd26e6a23a79d3d0d6cce3f4fa173185-us4');
+const mailchimps = mailchimp('md-UJtH5Tb5hNpohkzF59p1DQ');
 const verificationTokens = new Map<string, { userId: number; expiry: Date }>();
 
 export async function sendVerificationEmail(userId: number, email: string) {
