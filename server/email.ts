@@ -2,9 +2,9 @@ import { randomBytes } from "crypto";
 import { db } from "@db";
 import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
+import mailchimp from '@mailchimp/mailchimp_transactional'
 
-const mailchimp = require('@mailchimp/mailchimp_transactional')('fd26e6a23a79d3d0d6cce3f4fa173185-us4');
-
+const mailchimps = mailchimp('fd26e6a23a79d3d0d6cce3f4fa173185-us4');
 const verificationTokens = new Map<string, { userId: number; expiry: Date }>();
 
 export async function sendVerificationEmail(userId: number, email: string) {
@@ -24,7 +24,7 @@ export async function sendVerificationEmail(userId: number, email: string) {
   console.log("Verification URL: ", verificationUrl);
 
   try {
-    const response = await mailchimp.messages.send({
+    const response = await mailchimps.messages.send({
       message: {
         from_email: "no-reply@habitizr.com",
         subject: "Verify your email address",
@@ -37,7 +37,7 @@ export async function sendVerificationEmail(userId: number, email: string) {
         to: [{ email, type: "to" }],
       },
     });
-    console.log("Email sent via Mailchimp: ", response);
+    console.log("Email sent via mailchimps: ", response);
   } catch (error) {
     console.log("ERROR WHILE SENDING EMAIL: ", error);
   }
@@ -63,7 +63,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string) 
   const resetURL = `${process.env.APP_URL || "http://localhost:5000"}/reset-password?token=${resetToken}`;
 
   try {
-    const response = await mailchimp.messages.send({
+    const response = await mailchimps.messages.send({
       message: {
         from_email: "no-reply@habitizr.com",
         subject: "Password Reset Request",
