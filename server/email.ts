@@ -1,22 +1,9 @@
-import nodemailer from "nodemailer";
 import { randomBytes } from "crypto";
 import { db } from "@db";
 import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
 
-// In production, use a real SMTP service
-const transporter = nodemailer.createTransport({
-  host: "email-smtp.us-west-1.amazonaws.com",
-  port: 587, // Use port 587 for TLS
-  secure: false, // Set to false because we are using STARTTLS
-  auth: {
-    user: "AKIAYXWBNQTN75M4HWPG",
-    pass: "BGI/kQ22N1Z334AO1HeI8nKgFv5zSqM3Fu2+EhXnxPBn",
-  },
-  tls: {
-    rejectUnauthorized: false, // Set to true in production for stricter security
-  },
-});
+const mailchimp = require('@mailchimp/mailchimp_transactional')('fd26e6a23a79d3d0d6cce3f4fa173185-us4');
 
 const verificationTokens = new Map<string, { userId: number; expiry: Date }>();
 
@@ -35,21 +22,24 @@ export async function sendVerificationEmail(userId: number, email: string) {
 
   const verificationUrl = `${process.env.APP_URL || "http://localhost:5000"}/api/verify-email?token=${token}`;
   console.log("Verification URL: ", verificationUrl);
+
   try {
-    const sss = await transporter.sendMail({
-      from: '"Habitizr" <no-reply@habitizr.com>',
-      to: email,
-      subject: "Verify your email address",
-      html: `
-      <h1>Welcome to Habitizr!</h1>
-      <p>Please click the link below to verify your email address:</p>
-      <a href="${verificationUrl}">${verificationUrl}</a>
-      <p>This link will expire in 24 hours.</p>
-    `,
+    const response = await mailchimp.messages.send({
+      message: {
+        from_email: "no-reply@habitizr.com",
+        subject: "Verify your email address",
+        html: `
+          <h1>Welcome to Habitizr!</h1>
+          <p>Please click the link below to verify your email address:</p>
+          <a href="${verificationUrl}">${verificationUrl}</a>
+          <p>This link will expire in 24 hours.</p>
+        `,
+        to: [{ email, type: "to" }],
+      },
     });
-    console.log("Email sent: ", sss);
+    console.log("Email sent via Mailchimp: ", response);
   } catch (error) {
-console.log('ERROR WHILE SENDING EMAIL: ', error);
+    console.log("ERROR WHILE SENDING EMAIL: ", error);
   }
 }
 
@@ -69,17 +59,23 @@ export async function verifyEmail(token: string): Promise<boolean> {
   return true;
 }
 
-
-export async function sendPasswordResetEmail(email:string, resetToken:string) {
-
-  // Generate the reset URL (could be a front-end route)
+export async function sendPasswordResetEmail(email: string, resetToken: string) {
   const resetURL = `${process.env.APP_URL || "http://localhost:5000"}/reset-password?token=${resetToken}`;
 
-  await transporter.sendMail({
-    from: '"Habitizr" <no-reply@habitizr.com>',
-    to: email,
-    subject: "Password Reset Request",
-    html: `<p>You requested a password reset. Please click the link below to reset your password:</p>
-    <a href="${resetURL}">${resetURL}</a>`,
-  });
+  try {
+    const response = await mailchimp.messages.send({
+      message: {
+        from_email: "no-reply@habitizr.com",
+        subject: "Password Reset Request",
+        html: `
+          <p>You requested a password reset. Please click the link below to reset your password:</p>
+          <a href="${resetURL}">${resetURL}</a>
+        `,
+        to: [{ email, type: "to" }],
+      },
+    });
+    console.log("Password reset email sent via Mailchimp: ", response);
+  } catch (error) {
+    console.log("ERROR WHILE SENDING PASSWORD RESET EMAIL: ", error);
+  }
 }
