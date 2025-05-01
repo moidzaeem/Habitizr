@@ -54,6 +54,9 @@ export function startReminderScheduler() {
         const userHour = userTime.format('HH');           // Get hours in 24-hour format
         const userMinute = userTime.format('mm');         // Get minutes
 
+        const selectedDays = Array.isArray(habit.selectedDays)
+        ? habit.selectedDays.map(Number)
+        : [];
         // Check if it's time to send reminder for daily habits
         if (habit.frequency.toLowerCase() === "daily" && hours == userHour && minutes == userMinute) {
           await sendHabitReminder({ ...habit, user });
@@ -62,7 +65,7 @@ export function startReminderScheduler() {
         // Check if it's time to send reminder for semi-daily habits
         if (habit.frequency.toLowerCase() === "semi-daily" && hours === userHour && minutes === userMinute) {
           // Check if the current day is in the selectedDays (jsonb)
-          if (habit.selectedDays && habit.selectedDays.includes(currentDay)) {
+          if (selectedDays && selectedDays.includes(currentDay)) {
             await sendHabitReminder({ ...habit, user });
           }
         }
@@ -70,7 +73,7 @@ export function startReminderScheduler() {
         // Check if it's time to send reminder for weekly habits
         if (habit.frequency.toLowerCase() === "weekly" && hours === userHour && minutes === userMinute) {
           // Check if the current day is in the selectedDays (jsonb)
-          if (habit.selectedDays && habit.selectedDays.includes(currentDay)) {
+          if (selectedDays && selectedDays.includes(currentDay)) {
             await sendHabitReminder({ ...habit, user });
           }
         }
