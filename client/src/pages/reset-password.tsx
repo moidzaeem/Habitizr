@@ -114,7 +114,7 @@ export default function ResetPasswordPage() {
           {success ? (
             <div className="text-lg text-green-600">
               <p>Password reset successfully! You can now log in with your new password.</p>
-              <Link href="/login">
+              <Link href="/auth">
                 <Button variant="link" className="mt-4">Go to Login</Button>
               </Link>
             </div>
