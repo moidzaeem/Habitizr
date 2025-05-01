@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth, hashPassword } from "./auth";
+import { setupAuth, hashPassword, comparePassword } from "./auth";
 import { db } from "@db";
 import { habits, users, habitCompletions, habitReminders, habitResponses, habitConversations, habitInsights } from "@db/schema";
 import { checkTrialStatus } from "./middleware/checkTrialStatus";
@@ -329,20 +329,36 @@ export function registerRoutes(app: Express): Server {
   });
 
 
-  // Add password change endpoint
   app.post("/api/user/change-password", isAuthenticated, async (req, res) => {
     if (!req.user) {
       return res.status(401).send("Not authenticated");
     }
-
+  
     try {
-      const { newPassword } = req.body;
+      const { newPassword, currentPassword } = req.body;
+  
       if (!newPassword || newPassword.length < 6) {
-        return res
-          .status(400)
-          .send("Password must be at least 6 characters long");
+        return res.status(400).send("Password must be at least 6 characters long");
       }
-
+  
+      // Step 1: Get full user from DB (including current hashed password)
+      const [dbUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, req.user.id))
+        .limit(1);
+  
+      if (!dbUser) {
+        return res.status(404).send("User not found");
+      }
+  
+      // Step 2: Compare currentPassword with stored hash
+      const isMatch = await comparePassword(currentPassword, dbUser.password);
+      if (!isMatch) {
+        return res.status(403).send("Current password is incorrect");
+      }
+  
+      // Step 3: Hash and save the new password
       const hashedPassword = await hashPassword(newPassword);
       const [updatedUser] = await db
         .update(users)
@@ -350,12 +366,12 @@ export function registerRoutes(app: Express): Server {
           password: hashedPassword,
           mustChangePassword: false,
         })
-        // @ts-ignore
         .where(eq(users.id, req.user.id))
         .returning();
-
+  
       const { password: _, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
+  
     } catch (error) {
       console.error("Error changing password:", error);
       res.status(500).send("Failed to change password");

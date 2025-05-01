@@ -34,6 +34,7 @@ const crypto = {
 };
 
 export const hashPassword = crypto.hash;
+export const comparePassword = crypto.compare;
 
 export function setupAuth(app: Express) {
   const MemoryStore = createMemoryStore(session);
