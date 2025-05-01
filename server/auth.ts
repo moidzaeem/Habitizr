@@ -7,8 +7,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { users, loginSchema } from "@db/schema";
 import { db } from "@db";
-import { eq, or, and, gt } from "drizzle-orm";
-import { lower } from "drizzle-orm/pg-core";
+import { eq, or, and, gt,sql } from "drizzle-orm";
 import { TIERS } from "@/lib/tiers";
 import { OAuth2Client } from 'google-auth-library';
 import { sendPasswordResetEmail, sendVerificationEmail } from "./email";
@@ -69,14 +68,12 @@ export function setupAuth(app: Express) {
           .select()
           .from(users)
           .where(
-            or(
-              eq(lower(users.username), username.toLowerCase()),
-              eq(lower(users.email), username.toLowerCase())
-            )
+            sql`
+      lower(${users.username}) = ${username.toLowerCase()}
+      OR lower(${users.email}) = ${username.toLowerCase()}
+    `
           )
           .limit(1);
-
-
         if (!user) {
           return done({ message: "Invalid username or password." }, false, { message: "Invalid username or password." });
         }
