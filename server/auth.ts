@@ -8,6 +8,7 @@ import { promisify } from "util";
 import { users, loginSchema } from "@db/schema";
 import { db } from "@db";
 import { eq, or, and, gt } from "drizzle-orm";
+import { lower } from "drizzle-orm/pg-core";
 import { TIERS } from "@/lib/tiers";
 import { OAuth2Client } from 'google-auth-library';
 import { sendPasswordResetEmail, sendVerificationEmail } from "./email";
@@ -67,11 +68,14 @@ export function setupAuth(app: Express) {
         const [user] = await db
           .select()
           .from(users)
-          .where(or(
-            eq(users.username, username),
-            eq(users.email, username)
-          ))
+          .where(
+            or(
+              eq(lower(users.username), username.toLowerCase()),
+              eq(lower(users.email), username.toLowerCase())
+            )
+          )
           .limit(1);
+
 
         if (!user) {
           return done({ message: "Invalid username or password." }, false, { message: "Invalid username or password." });
@@ -154,7 +158,9 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password, email } = req.body;
+      let { username, password, email } = req.body;
+      username = username?.toLowerCase();
+      email = email?.toLowerCase();
 
       const [existingUser] = await db
       .select()
