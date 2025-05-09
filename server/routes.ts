@@ -1025,8 +1025,8 @@ ${browserInfo}
     "/api/get-client-secret",
     isAuthenticated,
     async (req, res) => {
-      const trailblazer = 'price_1R1ad3JKwzZ1wTvdcpJArZco';
-      const pathFinder = 'price_1R1acjJKwzZ1wTvdgzMyrOKn';
+      const trailblazer = 'price_1RMpwHJKwzZ1wTvdO7XEnm24';
+      const pathFinder = 'price_1RMpvMJKwzZ1wTvdkPKXYywt';
 
       try {
         // Destructure the packageType from the request body
